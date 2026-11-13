@@ -642,20 +642,20 @@ async function apiRoutes(request, env, path) {
     const b = await readJson(request);
     const pid = normalizeSearch(b.publicId);
     const method = String(b.paymentMethod ?? "");
-    const allowed = ["", "Paid", "COD", "Partial"];
+    const allowed = ["", "Paid", "Delivery", "COD", "Partial"];
     if (!PUBLIC_ID_RE.test(pid)) throw new HttpError(400, "অর্ডার আইডি সঠিক নয়!");
     if (!allowed.includes(method)) throw new HttpError(400, "Payment method সঠিক নয়!");
-    const order = await env.DB.prepare("SELECT total FROM orders WHERE public_id = ?").bind(pid).first();
+    const order = await env.DB.prepare("SELECT total, delivery_charge FROM orders WHERE public_id = ?").bind(pid).first();
     if (!order) throw new HttpError(404, "অর্ডার পাওয়া যায়নি!");
     const total = Math.max(0, Number(order.total) || 0);
-    let received = method === "Paid" ? total : method === "COD" || !method ? 0 : Number(b.paymentReceived);
+    let received = method === "Paid" ? total : method === "Delivery" ? Math.max(0, Number(order.delivery_charge) || 0) : method === "COD" || !method ? 0 : Number(b.paymentReceived);
     if (!Number.isSafeInteger(received) || received < 0 || received > total) {
       throw new HttpError(400, "প্রাপ্ত টাকার পরিমাণ ০ থেকে অর্ডারের মোট টাকার মধ্যে দিন!");
     }
     await env.DB.prepare("UPDATE orders SET payment_method = ?, payment_received = ? WHERE public_id = ?")
       .bind(method, received, pid).run();
     await audit(env, s.username, "order_payment", pid + " → " + (method || "Not selected") + " / " + received, rawIp);
-    return json({ success: true, paymentMethod: method, paymentReceived: received });
+    return json({ success: true, paymentMethod: method, paymentReceived: received, deliveryCharge: Number(order.delivery_charge) || 0 });
   }
 
   if (path === "/api/admin/order/note" && m === "POST") {
