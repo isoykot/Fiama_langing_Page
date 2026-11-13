@@ -1923,11 +1923,11 @@ function renderAdminHTML(nonce) {
           <summary><span>🖨️ Print settings</span><span class="muted">Click to open settings</span></summary>
           <div class="settings-body">
             <div class="print-choice-grid">
-              <details class="print-choice" id="invoiceSettingsAccordion">
+              <details class="print-choice" name="print-settings-choice" id="invoiceSettingsAccordion">
                 <summary><span class="print-choice-icon">📄</span><span class="print-choice-label">Invoice</span><span class="print-choice-arrow">⌄</span></summary>
                 <div class="print-choice-body" id="printBox"></div>
               </details>
-              <details class="print-choice pos-choice" id="posSettingsAccordion">
+              <details class="print-choice pos-choice" name="print-settings-choice" id="posSettingsAccordion">
                 <summary><span class="print-choice-icon">🧾</span><span class="print-choice-label">POS</span><span class="print-choice-arrow">⌄</span></summary>
                 <div class="print-choice-body" id="posPrintBox"></div>
               </details>
@@ -4451,16 +4451,28 @@ function renderAdminHTML(nonce) {
         '<div>' + chk(t('pr_upper'), 'head_upper') + '</div><div>' + chk(t('pr_compact'), 'compact') + '</div>' +
         '</div></details>';
 
-      box.innerHTML = '<div class="pr-grid"><div class="pr-form">' +
-          '<details class="pr-section pr-accordion" open><summary class="pr-section-title"><span class="pr-section-icon">🏷️</span>Brand and Logo</summary>' +
+      var brandSection = PRINT_TAB === 'pos'
+        ? '<details class="pr-section pr-accordion" open><summary class="pr-section-title"><span class="pr-section-icon">🏷️</span>Brand and Logo</summary>' +
+            '<p class="pr-section-note">Set the POS receipt brand, slogan, contact number and logo.</p>' +
+            '<div class="grid-2">' + txt('Brand name', 'brand', 60) + txt('Slogan', 'tagline', 120) + txt('Contact number', 'contact', 80) + '</div>' + logo +
+          '</details>'
+        : '<details class="pr-section pr-accordion" open><summary class="pr-section-title"><span class="pr-section-icon">🏷️</span>Brand and Logo</summary>' +
             '<p class="pr-section-note">Change invoice logo, brand name, slogan and their sizes and positions.</p>' +
             '<div class="grid-2">' + txt('Brand name', 'brand', 60) + num('Brand name text size (px)', 'brand_size', 10, 48) +
               txt('Slogan', 'tagline', 120) + num('Slogan text size (px)', 'tagline_size', 8, 32) +
               num('Logo size (px)', 'logo_w', 20, 220) +
               num('Logo left / right position (px)', 'logo_x', -300, 300) +
               num('Logo up / down position (px)', 'logo_y', -150, 250) + '</div>' + logo +
-          '</details>' +
-          '<details class="pr-section pr-accordion"><summary class="pr-section-title"><span class="pr-section-icon">✍️</span>Footer</summary>' +
+          '</details>';
+      var footerSection = PRINT_TAB === 'pos'
+        ? '<details class="pr-section pr-accordion"><summary class="pr-section-title"><span class="pr-section-icon">✍️</span>Footer</summary>' +
+            '<p class="pr-section-note">Edit the message shown at the bottom of the POS receipt.</p>' +
+            '<div class="grid-2">' +
+              '<div class="field"><label>Footer (Bangla)</label><textarea class="input" rows="2" maxlength="200" data-pf="footer_bn">' + esc(c.footer_bn || '') + '</textarea></div>' +
+              '<div class="field"><label>Footer (English)</label><textarea class="input" rows="2" maxlength="200" data-pf="footer_en">' + esc(c.footer_en || '') + '</textarea></div>' +
+            '</div>' +
+          '</details>'
+        : '<details class="pr-section pr-accordion"><summary class="pr-section-title"><span class="pr-section-icon">✍️</span>Footer</summary>' +
             '<p class="pr-section-note">Edit the Thank You message, brand address and phone. Adjust text size and position independently.</p>' +
             '<div class="grid-2">' +
               txt('Thank You heading', 'footer_title', 100) + num('Thank You heading size (px)', 'footer_title_size', 16, 80) +
@@ -4474,11 +4486,22 @@ function renderAdminHTML(nonce) {
               num('Address left / right position (px)', 'address_x', -300, 300) +
               num('Address up / down position (px)', 'address_y', -300, 300) +
             '</div>' +
+          '</details>';
+      var pageSection = '<details class="pr-section pr-accordion"><summary class="pr-section-title"><span class="pr-section-icon">📐</span>Page size</summary>' +
+        '<div class="grid-2">' + sel('Page size', 'page', (PRINT_TAB === 'pos' ? [['58mm','58mm'],['80mm','80mm']] : ['A4', 'A5', 'Letter'].map(function (k) { return [k, k]; }))) +
+          (PRINT_TAB === 'pos' ? '' : num('Page margin (mm)', 'margin', 0, 25)) + '</div>' +
+        '</details>';
+
+      box.innerHTML = '<div class="pr-grid"><div class="pr-form">' +
+          brandSection + footerSection + pageSection +
+            '<p class="pr-section-note">Change invoice logo, brand name, slogan and their sizes and positions.</p>' +
+            '<div class="grid-2">' + txt('Brand name', 'brand', 60) + num('Brand name text size (px)', 'brand_size', 10, 48) +
+              txt('Slogan', 'tagline', 120) + num('Slogan text size (px)', 'tagline_size', 8, 32) +
+              num('Logo size (px)', 'logo_w', 20, 220) +
+              num('Logo left / right position (px)', 'logo_x', -300, 300) +
+              num('Logo up / down position (px)', 'logo_y', -150, 250) + '</div>' + logo +
           '</details>' +
-          '<details class="pr-section pr-accordion"><summary class="pr-section-title"><span class="pr-section-icon">📐</span>Page size</summary>' +
-            '<div class="grid-2">' + sel('Page size', 'page', ['A4', 'A5', 'Letter'].map(function (k) { return [k, k]; })) +
-              num('Page margin (mm)', 'margin', 0, 25) + '</div>' +
-          '</details>' +
+
           '<div class="pr-savebar"><button type="button" class="btn" data-action="pt-save">' + esc(t('pr_save')) + '</button>' +
             '<button type="button" class="btn ghost" data-action="pt-reset">' + esc(t('pr_reset')) + '</button></div>' +
         '</div><div class="pr-side"><div class="pr-section-title"><span class="pr-section-icon">🖨️</span>' + esc(t('pr_preview')) + '</div><div id="printPrev"></div><div id="printPreviewZoomControls"></div></div></div>';
