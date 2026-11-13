@@ -1126,7 +1126,7 @@ function printDefaults(kind) {
   const pos = kind === "pos";
   const show = {};
   for (const k of PRINT_KEYS) show[k] = true;
-  if (pos) { show.address = false; show.area = false; show.unit = false; }
+  if (pos) { show.unit = false; }
   return {
     theme: pos ? "p_classic" : "emerald", brand: "Brand Name", tagline: "", contact: "",
     logo: "", logo_w: pos ? 48 : 64,
