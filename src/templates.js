@@ -1286,9 +1286,6 @@ function renderAdminHTML(nonce) {
     .doc-modal-actions .btn { min-width:0; min-height:43px; padding:9px 6px; border-radius:10px; font-size:12px; font-weight:800; white-space:normal; }
     .doc-modal-actions .doc-print-btn { background:var(--brand); }
     .doc-modal-actions .doc-save-btn, .doc-modal-actions .doc-back-btn { background:var(--chip); color:var(--text); }
-    .pos-doc-modal-canvas { gap:14px; }
-    .pos-doc-modal-actions { display:flex; flex-direction:column; flex:0 0 145px; width:145px; margin:0; gap:10px; }
-    .pos-doc-modal-actions .btn { width:100%; min-height:76px; font-size:14px; }
     @media(max-width:520px) { .doc-modal-canvas { height:54vh; max-height:54vh; padding:6px; overflow:auto; } .doc-modal-actions { grid-template-columns:1fr; } .doc-modal-actions .btn { min-height:42px; font-size:13px; } }
 
     .kv { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; font-size: 14px; margin-bottom: 14px; }
@@ -3341,17 +3338,13 @@ function renderAdminHTML(nonce) {
       var c = PRINT[kind];
       openModal(
         '<div class="doc-modal-top"><div class="doc-modal-title"><span class="doc-modal-icon">' + (kind === 'pos' ? '🧾' : '📄') + '</span><div><h3>' + (kind === 'pos' ? 'POS Receipt' : 'Invoice') + '</h3><p>Order document preview</p></div></div><span class="doc-modal-id">' + esc(pid) + '</span></div>' +
-        '<div class="doc-modal-canvas' + (kind === 'pos' ? ' pos-doc-modal-canvas' : '') + '" id="invoicePreviewCanvas">' + (kind === 'pos' ? pdPreviewHtml(o, c, 'pvModal', kind) + '<div class="doc-modal-actions pos-doc-modal-actions">' +
-          '<button class="btn ghost doc-save-btn" data-action="download" data-kind="' + kind + '" data-pid="' + esc(pid) + '">⬇️ Save file (HTML)</button>' +
-          '<button class="btn doc-print-btn" data-action="print" data-kind="' + kind + '" data-pid="' + esc(pid) + '">🖨️ Print</button>' +
-          '<button class="btn ghost doc-back-btn" data-action="status-back" data-pid="' + esc(pid) + '">← Back to order</button>' +
-        '</div>' : '<div class="invoice-preview-stage">' + pdPreviewHtml(o, c, 'pvModal', kind) + '</div>') + '</div>' +
+        '<div class="doc-modal-canvas" id="invoicePreviewCanvas">' + (kind === 'pos' ? pdPreviewHtml(o, c, 'pvModal', kind) : '<div class="invoice-preview-stage">' + pdPreviewHtml(o, c, 'pvModal', kind) + '</div>') + '</div>' +
         (kind === 'pos' ? '' : previewZoomControls('invoicePreviewCanvas', 'pvModal')) +
-        (kind === 'pos' ? '' : '<div class="doc-modal-actions">' +
+        '<div class="doc-modal-actions">' +
           '<button class="btn doc-print-btn" data-action="print" data-kind="' + kind + '" data-pid="' + esc(pid) + '">🖨️ Print</button>' +
           '<button class="btn ghost doc-save-btn" data-action="download" data-kind="' + kind + '" data-pid="' + esc(pid) + '">⬇️ Save file (HTML)</button>' +
           '<button class="btn ghost doc-back-btn" data-action="status-back" data-pid="' + esc(pid) + '">← Back to order</button>' +
-        '</div>')
+        '</div>'
       );
       if (kind !== 'pos') requestAnimationFrame(function () { fitInvoicePreview('invoicePreviewCanvas', 'pvModal', 'fit'); });
     }
