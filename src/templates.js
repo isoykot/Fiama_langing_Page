@@ -1486,6 +1486,17 @@ function renderAdminHTML(nonce) {
       #appView .nav-btn { padding:8px 9px; font-size:12px; }
       #appView .view-head h2 { font-size:18px; }
     }
+    /* Give Invoice and POS live previews enough vertical room to show the full page/receipt. */
+    .pr-side #printPrev {
+      height:clamp(520px,78vh,900px) !important;
+      min-height:520px !important;
+    }
+    @media (max-width:760px) {
+      .pr-side #printPrev {
+        height:clamp(380px,70svh,760px) !important;
+        min-height:380px !important;
+      }
+    }
     @keyframes up { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
   </style>
 </head>
