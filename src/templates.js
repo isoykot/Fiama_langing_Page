@@ -1070,6 +1070,61 @@ function renderAdminHTML(nonce) {
     .security-account-dialog-head p{font-size:13px;color:var(--muted);margin:0}
     .security-account-dialog #saWrap{display:block!important;margin-top:0!important}
     @media(max-width:600px){.security-account-modal{padding:10px;align-items:flex-end}.security-account-dialog{max-height:92dvh;border-radius:18px;padding:14px}}
+    /* Manu dropdown uses the same visual language as Account Information. */
+    .brand-menu-wrap{position:relative;display:inline-flex;align-items:center;flex:0 0 auto}
+    .brand-menu-trigger{border:0;cursor:pointer;touch-action:manipulation}
+    .brand-menu-trigger:focus-visible{outline:2px solid #a7f3d0;outline-offset:3px}
+    .brand-menu{position:absolute;left:0;top:calc(100% + 12px);z-index:1000;width:min(260px,calc(100vw - 28px));padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);box-shadow:0 16px 42px rgba(0,0,0,.2)}
+    .brand-menu.hidden{display:none}
+    .brand-menu-heading{padding:10px 12px 9px;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.02em}
+    .brand-menu-item{width:100%;display:flex;align-items:center;gap:10px;padding:12px;border:0;border-radius:9px;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+    .brand-menu-item:hover{background:var(--soft,var(--chip))}
+    .brand-menu-item:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+    .brand-menu-arrow{margin-left:auto;color:var(--muted);font-size:22px;line-height:1}
+    @media(max-width:520px){.brand-menu{left:0;max-width:calc(100vw - 20px)}}
+    /* Login credentials stay white in both Day and Night modes. */
+    #loginView .login-card input.input,
+    #loginView .login-card .pw input.input{
+      background:#fff !important;color:#0f172a !important;
+      border:1px solid #cbd5e1 !important;color-scheme:light !important;
+      -webkit-text-fill-color:#0f172a !important;
+      box-shadow:none;
+    }
+    #loginView .login-card input.input::placeholder{color:#64748b !important;opacity:1}
+    #loginView .login-card input.input:-webkit-autofill,
+    #loginView .login-card input.input:-webkit-autofill:hover,
+    #loginView .login-card input.input:-webkit-autofill:focus{
+      -webkit-text-fill-color:#0f172a !important;
+      -webkit-box-shadow:0 0 0 1000px #fff inset !important;
+      box-shadow:0 0 0 1000px #fff inset !important;
+      transition:background-color 99999s ease-out 0s;
+    }
+    /* Orders search and filters: legible controls on narrow Night Mode screens. */
+    :root[data-theme="dark"] #appView #v-orders .toolbar{
+      display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:9px;align-items:stretch;min-width:0;
+    }
+    :root[data-theme="dark"] #appView #v-orders #oSearch{
+      grid-column:1 / -1;width:100%;min-width:0;min-height:46px;
+      background:var(--input);color:var(--text);border:1px solid #344563;
+      border-radius:12px;padding:11px 13px;color-scheme:dark;
+    }
+    :root[data-theme="dark"] #appView #v-orders #oStatus,
+    :root[data-theme="dark"] #appView #v-orders #oRange{
+      width:100%;min-width:0;min-height:46px;padding:10px 30px 10px 11px;
+      background-color:#17243a;color:#f1f5f9;border:1px solid #3a4c6a;
+      border-radius:12px;font-size:14px;line-height:1.35;color-scheme:dark;
+      white-space:normal;
+    }
+    :root[data-theme="dark"] #appView #v-orders #oStatus option,
+    :root[data-theme="dark"] #appView #v-orders #oRange option{
+      background:#17243a;color:#f1f5f9;
+    }
+    @media(max-width:420px){
+      :root[data-theme="dark"] #appView #v-orders .toolbar{gap:7px}
+      :root[data-theme="dark"] #appView #v-orders #oStatus,
+      :root[data-theme="dark"] #appView #v-orders #oRange{font-size:13px;padding-left:9px;padding-right:22px}
+    }
     .account-menu-wrap{position:relative;display:inline-flex;align-items:center}
     .account-menu-trigger{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:0}
     .account-menu-trigger:focus-visible,.account-menu-item:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
