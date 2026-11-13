@@ -2771,6 +2771,8 @@ function renderAdminHTML(nonce) {
       VIEW = view;
       store.set('admin_view', view);
       document.querySelectorAll('.view').forEach(function (v) {
+        // Do not let main navigation hide/show content inside account popups.
+        if (v.closest('.security-account-modal')) return;
         v.classList.toggle('hidden', v.id !== 'v-' + view);
       });
       document.querySelectorAll('.nav-btn').forEach(function (b) {
@@ -4882,6 +4884,11 @@ function renderAdminHTML(nonce) {
       var modal = $(modalId);
       if (!modal) return;
       document.querySelectorAll('.security-account-modal').forEach(function (m) { m.classList.add('hidden'); });
+      // Modal views are outside the main navigation flow. The global go()
+      // handler hides inactive .view sections, so explicitly reveal the
+      // requested view whenever its account popup is opened.
+      var panelView = view && modal.querySelector('#v-' + view);
+      if (panelView) panelView.classList.remove('hidden');
       modal.classList.remove('hidden');
       if (window.history && window.history.pushState) {
         window.history.pushState({ accountPanel: modalId }, '');
