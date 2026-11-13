@@ -1267,7 +1267,7 @@ function renderAdminHTML(nonce) {
     .sheet-close { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--chip); cursor: pointer; font-size: 15px; }
     .mhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; padding-right: 36px; flex-wrap: wrap; }
     .sheet h3 { font-size: 19px; margin: 6px 0 12px; }
-    .order-status-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 12px}.order-status-row .field{margin:0;min-width:0}.order-payment-amount[hidden]{display:none!important}.order-payment-amount{margin:0 0 12px}@media(max-width:520px){.order-status-row{gap:7px}.order-status-row .lbl{font-size:12px}}
+    .order-status-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0 12px}.order-status-row .field{margin:0;min-width:0}.order-payment-amount[hidden]{display:none!important}.order-payment-amount{margin:0 0 12px}.order-payment-controls{display:flex;align-items:center;gap:8px}.order-payment-controls input{flex:1;min-width:0;width:100px}.order-payment-controls .btn{flex:0 0 auto;padding:9px 16px}@media(max-width:520px){.order-status-row{gap:7px}.order-status-row .lbl{font-size:12px}.order-payment-controls .btn{padding:9px 12px}}
     .doc-modal-top { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:2px 38px 12px 0; border-bottom:1px solid var(--line); margin-bottom:12px; }
     .doc-modal-title { display:flex; align-items:center; gap:10px; min-width:0; }
     .doc-modal-icon { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; border-radius:12px; background:var(--chip); font-size:20px; }
@@ -2868,7 +2868,7 @@ function renderAdminHTML(nonce) {
           '<dt>' + esc(t('d_time')) + '</dt><dd>' + fmtDate(o.created_at) + '</dd>' +
         '</dl>' +
         '<div class="order-status-row"><label class="field"><span class="lbl">' + esc(t('d_status')) + '</span><select class="input" data-action="status" data-pid="' + esc(pid) + '">' + opts + '</select></label><label class="field"><span class="lbl">' + esc(t('pay_method')) + '</span><select class="input" data-action="payment-method" data-pid="' + esc(pid) + '"><option value=""' + (!o.payment_method ? ' selected' : '') + '>' + esc(t('pay_select')) + '</option><option value="Paid"' + (o.payment_method === 'Paid' ? ' selected' : '') + '>' + esc(t('pay_paid')) + '</option><option value="Delivery"' + (o.payment_method === 'Delivery' ? ' selected' : '') + '>' + esc(t('pay_delivery')) + '</option><option value="COD"' + (o.payment_method === 'COD' ? ' selected' : '') + '>' + esc(t('pay_cod')) + '</option><option value="Partial"' + (o.payment_method === 'Partial' ? ' selected' : '') + '>' + esc(t('pay_partial')) + '</option></select></label></div>' +
-        '<label class="field order-payment-amount" ' + (o.payment_method === 'Partial' ? '' : 'hidden') + '><span class="lbl">' + esc(t('pay_received')) + '</span><input class="input" type="number" min="0" max="' + Number(o.total || 0) + '" step="1" data-action="payment-amount" data-pid="' + esc(pid) + '" value="' + Number(o.payment_received || 0) + '" placeholder="' + esc(t('pay_received_placeholder')) + '"></label>' +
+        '<div class="field order-payment-amount" ' + (o.payment_method === 'Partial' ? '' : 'hidden') + '><span class="lbl">' + esc(t('pay_received')) + '</span><div class="order-payment-controls"><input class="input" type="number" min="0" max="' + Number(o.total || 0) + '" step="1" data-role="payment-amount-input" data-pid="' + esc(pid) + '" value="' + Number(o.payment_received || 0) + '" placeholder="' + esc(t('pay_received_placeholder')) + '"><button type="button" class="btn" data-action="save-payment-amount" data-pid="' + esc(pid) + '">Save</button></div></div>' +
         '<label class="field"><span class="lbl">' + esc(t('note_label')) + '</span><textarea class="input" id="orderNote" rows="2">' + esc(o.note || '') + '</textarea></label>' +
         '<button class="btn ghost block" data-action="save-note" data-pid="' + esc(pid) + '">' + esc(t('note_save')) + '</button>' +
         '<div class="actions5">' +
@@ -3294,7 +3294,7 @@ function renderAdminHTML(nonce) {
           '<div class="receipt-grand"><span>Grand Total</span><span>' + money(due) + ' BDT</span></div>' +
           (S.payment ? (function () {
             var method = String(o.payment_method || '');
-            var methodLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Partial' ? 'Partial Payment - ' + money(received) : '🚚 Cash on Delivery (COD)';
+            var methodLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Partial' ? 'Partial Payment - ' + money(received) + ' BDT' : '🚚 Cash on Delivery (COD)';
             return '<div class="receipt-cod"><div>' + methodLabel + (method === 'COD' || method === 'Delivery' || !method ? ' — ' + money(due) + ' BDT' : '') + '</div></div>';
           })() : '') +
           '<div class="receipt-footer">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
@@ -4734,6 +4734,10 @@ function renderAdminHTML(nonce) {
       else if (a === 'coupon-toggle') toggleCoupon(id, el.getAttribute('data-on') === '1');
       else if (a === 'coupon-del') deleteCoupon(id, el.getAttribute('data-code'));
       else if (a === 'save-note') saveNote(pid);
+      else if (a === 'save-payment-amount') {
+        var amountInput = el.closest('.order-payment-amount') && el.closest('.order-payment-amount').querySelector('[data-role="payment-amount-input"]');
+        if (amountInput) updatePayment(pid, 'Partial', amountInput.value);
+      }
       else if (a === 'add-variant') addVariant();
       else if (a === 'tb-reset') resetTopbar();
       else if (a === 'logout') logout();
@@ -4839,8 +4843,6 @@ function renderAdminHTML(nonce) {
         var payWrap = document.querySelector('.order-payment-amount');
         if (payWrap) payWrap.hidden = t2.value !== 'Partial';
         updatePayment(payPid, t2.value, t2.value === 'Paid' ? Number((CACHE[payPid] || {}).total || 0) : t2.value === 'Delivery' ? Number((CACHE[payPid] || {}).delivery_charge || 0) : 0);
-      } else if (t2.getAttribute && t2.getAttribute('data-action') === 'payment-amount') {
-        updatePayment(t2.getAttribute('data-pid'), 'Partial', t2.value);
       } else if (t2.id === 'pFiles') {
         handleImages(e);
       } else if (t2.id === 'tbAlign') {
