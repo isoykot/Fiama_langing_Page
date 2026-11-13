@@ -3088,7 +3088,9 @@ function renderAdminHTML(nonce) {
         (method === 'Partial' && received > 0 ? '<div><span>Partial Payment</span><b>−' + money(received) + '</b></div>' : '') +
         (Number(o.bulk_discount)>0 ? '<div><span>Bulk discount</span><b>−' + money(o.bulk_discount) + '</b></div>' : '') +
         (Number(o.coupon_discount)>0 ? '<div><span>Coupon discount' + (o.coupon_code ? ' ('+esc(o.coupon_code)+')' : '') + '</span><b>−' + money(o.coupon_discount) + '</b></div>' : '') +
-        '<div><span>Delivery charge</span><b>' + (method === 'Paid' || method === 'Delivery' ? '<strong>Paid</strong>' : money(o.delivery_charge||0)) + '</b></div><div class="inv-total"><span>Total</span><b>' + money(due) + '</b></div>';
+        '<div><span>Delivery charge</span><b>' + money(o.delivery_charge||0) + '</b></div>' +
+        (method === 'Delivery' ? '<div><span>Pay Delivery Charge</span><b>−' + money(received) + '</b></div>' : '') +
+        '<div class="inv-total"><span>Total</span><b>' + money(due) + '</b></div>';
       return '<div class="invoice-sheet"><header class="inv-top"><div class="inv-brand">' + logo + '<div><strong>' + esc(c.brand||PRODUCT.title||'Fiama Fashion') + '</strong>' + (c.tagline ? '<small>' + esc(c.tagline) + '</small>' : '') + '</div></div><div class="inv-title">Invoice</div></header>' +
         '<section class="inv-parties"><div class="inv-bill"><h3>Billed to:</h3><strong>' + esc(o.customer_name||'') + '</strong><span>' + esc(o.phone||'') + '</span><span>' + esc(o.address||'') + '</span>' + (o.delivery_area ? '<span>' + esc(o.delivery_area) + '</span>' : '') + '</div><div class="inv-number"><strong>Order ID: ' + esc(o.public_id) + '</strong><span>Date: ' + fmtInvoiceDate(o.created_at) + '</span></div></section>' +
         '<table class="inv-table"><thead><tr><th>Item</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>' + rows + '</tbody></table><section class="inv-totals">' + totals + '</section>' +
@@ -3262,7 +3264,8 @@ function renderAdminHTML(nonce) {
           (method === 'Partial' && received > 0 ? '<div class="receipt-row"><span>Partial Payment</span><b>−' + money(received) + '</b></div>' : '') +
           (S.bulk && Number(o.bulk_discount) > 0 ? '<div class="receipt-row"><span>Bulk discount</span><b>−' + money(o.bulk_discount) + '</b></div>' : '') +
           (S.coupon && Number(o.coupon_discount) > 0 ? '<div class="receipt-row"><span>Coupon discount</span><b>−' + money(o.coupon_discount) + '</b></div>' : '') +
-          '<div class="receipt-row"><span>Delivery Charge</span><b>' + money(o.delivery_charge || 0) + '</b></div>';
+          '<div class="receipt-row"><span>Delivery Charge</span><b>' + money(o.delivery_charge || 0) + '</b></div>' +
+          (method === 'Delivery' ? '<div class="receipt-row"><span>Pay Delivery Charge</span><b>−' + money(received) + '</b></div>' : '');
         return '<style>' +
           '#' + sc + '{width:' + ((c.page === '58mm') ? '58mm' : (c.page === '80mm' ? '80mm' : '80mm')) + ';max-width:100%;margin:0 auto;padding:3mm 2.5mm;background:#fff;color:#000;font-family:Arial, sans-serif;font-size:11px;line-height:1.35;box-sizing:border-box;overflow-wrap:anywhere}' +
           '#' + sc + ' *{box-sizing:border-box}#' + sc + ' .receipt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}' +
@@ -3294,8 +3297,8 @@ function renderAdminHTML(nonce) {
           '<div class="receipt-grand"><span>Grand Total</span><span>' + money(due) + ' BDT</span></div>' +
           (S.payment ? (function () {
             var method = String(o.payment_method || '');
-            var methodLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Partial' ? 'Partial Payment - ' + money(received) + ' BDT' : '🚚 Cash on Delivery (COD)';
-            return '<div class="receipt-cod"><div>' + methodLabel + (method === 'COD' || method === 'Delivery' || !method ? ' — ' + money(due) + ' BDT' : '') + '</div></div>';
+            var methodLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Delivery' ? 'Pay Delivery Charge - ' + money(received) + ' BDT' : method === 'Partial' ? 'Partial Payment - ' + money(received) + ' BDT' : '🚚 Cash on Delivery (COD)';
+            return '<div class="receipt-cod"><div>' + methodLabel + (method === 'COD' || !method ? ' — ' + money(due) + ' BDT' : '') + '</div></div>';
           })() : '') +
           '<div class="receipt-footer">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
           (S.contact && contact ? '<br>Contact Us: ' + esc(contact) : '') + '</div></div>';
