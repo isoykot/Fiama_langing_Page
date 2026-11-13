@@ -1338,15 +1338,16 @@ function renderAdminHTML(nonce) {
     .print-choice { align-self:start; min-width:0; }
     /* When one print type is open, place its editor and the shared live preview side by side. */
     .print-choice-grid.has-open-choice { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
-    .print-choice-grid.has-open-choice .print-choice:not([open]) { display:none; }
     .print-choice-grid.has-open-choice .print-choice[open] { grid-column:1; grid-row:1; }
-    .print-choice-grid.has-open-choice .print-shared-preview { grid-column:2; grid-row:1; align-self:start; }
+    .print-choice-grid.has-open-choice .print-choice:not([open]) { grid-column:2; grid-row:1; }
+    .print-choice-grid.has-open-choice .print-shared-preview { grid-column:2; grid-row:2; align-self:start; }
     /* The selected editor stays fully inside its own half-width card. */
     .print-choice-body { min-width:0; overflow:hidden; }
     @media (max-width:760px) {
       .print-choice-grid.has-open-choice { grid-template-columns:minmax(0,1fr); }
-      .print-choice-grid.has-open-choice .print-choice[open],
-      .print-choice-grid.has-open-choice .print-shared-preview { grid-column:1; grid-row:auto; }
+      .print-choice-grid.has-open-choice .print-choice[open] { grid-column:1; grid-row:1; }
+      .print-choice-grid.has-open-choice .print-choice:not([open]) { grid-column:1; grid-row:2; }
+      .print-choice-grid.has-open-choice .print-shared-preview { grid-column:1; grid-row:3; }
     }
     .print-choice-body .pr-grid { grid-template-columns:minmax(0,1fr) !important; }
     .print-choice-body .pr-side { min-width:0; width:100%; }
