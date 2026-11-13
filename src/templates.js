@@ -3192,7 +3192,10 @@ function renderAdminHTML(nonce) {
           '<div class="receipt-footer">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
           (S.contact && contact ? '<br>Contact: ' + esc(contact) : '') + '</div></div>';
       }
-      var variant = kind === 'pos'
+      var invoiceCss = pdInvoiceCss(sc, c) + pdInvoicePageCss(sc, c);
+      return '<style>' + invoiceCss + '</style><div id="' + sc + '" class="doc-invoice">' + pdInvoiceBody(o, c) + '</div>';
+    }
+
     function pdFullDoc(o, c, kind) {
       var pg=(PD_PAGE[c.page]||PD_PAGE.A4)[1];
       var content=pdPreviewHtml(o,c,'pvFull',kind);
