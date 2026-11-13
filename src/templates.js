@@ -978,28 +978,23 @@ function renderAdminHTML(nonce) {
     details.card.settings-accordion > summary:after { content:'▸'; color:var(--muted); font-size:18px; font-weight:800; flex:0 0 auto; }
     details.card.settings-accordion[open] > summary:after { content:'▾'; }
     .settings-accordion .settings-body { padding:0 16px 16px; }
-    .print-choice-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:auto minmax(0,1fr); align-items:stretch; grid-auto-flow:row; gap:14px; margin:2px 0 14px; }
-    .print-choice { min-width:0; height:auto; align-self:start; overflow:hidden; border:1px solid var(--line); border-radius:16px; background:var(--card); box-shadow:0 3px 10px rgba(15,23,42,.04); transition:border-color .18s,box-shadow .18s,transform .18s; }
-    .print-choice:hover { border-color:var(--brand); box-shadow:0 8px 20px rgba(15,23,42,.08); transform:translateY(-1px); }
-    .print-choice > summary { display:flex; align-items:center; gap:10px; min-height:76px; padding:14px 16px; list-style:none; cursor:pointer; font-weight:850; color:var(--text); background:linear-gradient(135deg,var(--card),var(--soft)); }
+    /* Invoice and POS print-setting launch cards */
+    .print-choice-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:14px; margin:2px 0 14px; }
+    .print-choice { min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:18px; background:var(--card); box-shadow:0 3px 12px rgba(15,23,42,.05); transition:border-color .18s,box-shadow .18s,transform .18s; }
+    .print-choice:hover { border-color:var(--brand); box-shadow:0 8px 22px rgba(15,23,42,.09); transform:translateY(-2px); }
+    .print-choice > summary { display:flex; align-items:center; gap:10px; min-height:82px; padding:15px 16px; list-style:none; cursor:pointer; font-weight:850; color:var(--text); background:linear-gradient(135deg,var(--card),var(--soft)); }
     .print-choice > summary::-webkit-details-marker { display:none; }
-    .print-choice-icon { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; border-radius:13px; background:var(--chip); font-size:22px; }
-    .print-choice-label { flex:1; font-size:15px; }
+    .print-choice-icon { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; border-radius:14px; background:#e0f2fe; color:#075985; font-size:23px; }
+    .print-choice-label { flex:1; font-size:16px; }
     .print-choice-arrow { color:var(--muted); font-size:21px; transition:transform .18s; }
-    .print-choice[open] { border-color:var(--brand); box-shadow:0 8px 22px rgba(15,23,42,.08); }
-    .print-choice[open] { grid-row:span 2; }
-    .pos-choice[open] { grid-column:2; }
-    .print-shared-preview { grid-column:2; grid-row:2; min-width:0; align-self:start; }
-    .print-choice-grid.pos-active .print-shared-preview { grid-column:1; }
-    .print-choice-grid.pos-active .print-choice:not(.pos-choice) { grid-column:1; }
-    .print-choice-grid.pos-active .pos-choice[open] { grid-column:2; }
+    .print-choice[open] { border-color:var(--brand); box-shadow:0 8px 22px rgba(15,23,42,.09); }
     .print-choice-grid .pr-grid { display:block; }
     .print-choice-grid .pr-form { min-width:0; }
     .print-choice-grid .print-shared-preview .pr-side { width:100%; min-width:0; }
     .print-choice[open] .print-choice-arrow { transform:rotate(180deg); }
     .print-choice-body { padding:0 14px 14px; }
-    .pos-choice .print-choice-icon { background:#ede9fe; }
-    @media(max-width:520px) { .print-choice-grid { gap:9px; } .print-choice > summary { min-height:68px; padding:10px; gap:7px; } .print-choice-icon { flex-basis:34px; width:34px; height:34px; font-size:19px; border-radius:10px; } .print-choice-label { font-size:13px; } }
+    .pos-choice .print-choice-icon { background:#ede9fe; color:#6d28d9; }
+    @media(max-width:520px) { .print-choice-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; } .print-choice > summary { min-height:70px; padding:10px 8px; gap:7px; } .print-choice-icon { flex-basis:34px; width:34px; height:34px; font-size:19px; border-radius:11px; } .print-choice-label { font-size:13px; } }
 
     .settings-accordion > summary .muted { display:none; }
     /* Compact the OUTER Settings option cards only; expanded contents remain untouched. */
