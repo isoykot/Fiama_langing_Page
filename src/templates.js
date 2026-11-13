@@ -2788,6 +2788,8 @@ function renderAdminHTML(nonce) {
     }
 
     function refreshCurrent() {
+      if (!$('logsModal').classList.contains('hidden')) { loadLogs(); return; }
+      if (!$('settingsModal').classList.contains('hidden')) { loadIdGenerator(); return; }
       if (VIEW === 'dashboard') loadDashboard();
       else if (VIEW === 'orders') loadOrders(true);
       else if (VIEW === 'offers') loadOffers();
@@ -4875,14 +4877,8 @@ function renderAdminHTML(nonce) {
 
     var accountModalHistoryDepth = 0;
     function openAccountPanel(modalId, view) {
-      VIEW = view;
-      store.set('admin_view', view);
-      document.querySelectorAll('.view').forEach(function (v) {
-        v.classList.toggle('hidden', v.id !== 'v-' + view);
-      });
-      document.querySelectorAll('.nav-btn').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-view') === view);
-      });
+      // Account panels overlay the current page; they must not replace or hide
+      // the underlying main view (otherwise closing Logs/Settings leaves a blank page).
       var modal = $(modalId);
       if (!modal) return;
       document.querySelectorAll('.security-account-modal').forEach(function (m) { m.classList.add('hidden'); });
