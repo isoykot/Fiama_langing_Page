@@ -1781,6 +1781,65 @@ function renderAdminHTML(nonce) {
       #appView .table-wrap table { min-width: 560px; }
     }
 
+    /* Dashboard Product & Stock: phone-sized Night Mode layout and contrast. */
+    :root[data-theme="dark"] #appView #v-dashboard #stockBox {
+      color:var(--text);
+      min-width:0;
+    }
+    :root[data-theme="dark"] #appView #v-dashboard #stockBox .kpi {
+      background:var(--chip);
+      color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:11px 12px;
+      margin:0 0 8px;
+      min-width:0;
+    }
+    :root[data-theme="dark"] #appView #v-dashboard #stockBox .kpi strong {
+      color:var(--text);
+      min-width:0;
+      overflow-wrap:anywhere;
+      text-align:right;
+    }
+    :root[data-theme="dark"] #appView #v-dashboard #stockBox .badge.s-Delivered {
+      background:#123d32;
+      color:#86efc1;
+      border:1px solid #23634f;
+    }
+    :root[data-theme="dark"] #appView #v-dashboard #stockBox .badge.s-Cancelled {
+      background:#45212b;
+      color:#fecdd3;
+      border:1px solid #783044;
+    }
+    @media (max-width:760px) {
+      :root[data-theme="dark"] #appView #v-dashboard > .grid-2 {
+        grid-template-columns:minmax(0,1fr);
+        gap:10px;
+      }
+      :root[data-theme="dark"] #appView #v-dashboard #stockBox .kpi {
+        display:flex;
+        flex-direction:column;
+        align-items:stretch;
+        justify-content:flex-start;
+        gap:6px;
+        padding:12px;
+        font-size:13px;
+      }
+      :root[data-theme="dark"] #appView #v-dashboard #stockBox .kpi strong {
+        display:flex;
+        flex-wrap:wrap;
+        align-items:center;
+        justify-content:flex-start;
+        gap:7px;
+        text-align:left;
+        font-size:15px;
+        line-height:1.45;
+      }
+      :root[data-theme="dark"] #appView #v-dashboard #stockBox .badge {
+        white-space:normal;
+        line-height:1.35;
+      }
+    }
     @keyframes up { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
   </style>
 </head>
