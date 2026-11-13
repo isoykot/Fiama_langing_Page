@@ -222,6 +222,26 @@ function renderLandingHTML(p, inv, nonce, notes = {}) {
     .reward-code span { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 21px; font-weight: 900; letter-spacing: 2px; background: var(--brand-soft); padding: 8px 14px; border-radius: 10px; color: var(--brand-ink); }
     .reward-note { font-size: 12.5px; margin-top: 10px; line-height: 1.6; }
     .back-btn { margin-top: 16px; width: 100%; padding: 13px; border: none; border-radius: 14px; background: var(--brand); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; }
+
+    /* Mobile/tablet usability: avoid iOS input zoom and provide comfortable touch targets. */
+    @media (max-width: 640px) {
+      .field input[type="text"], .field input[type="tel"], .field textarea,
+      .coupon-box input, .unit-sel { min-height:44px; font-size:16px; }
+      .field textarea { min-height:88px; }
+      .qty-btn { width:44px; height:44px; }
+      .act-btn, .open-btn, .submit-btn, .back-btn { min-height:46px; }
+      .var-chip, .del-card { min-height:44px; }
+      .modal-box { max-height:92dvh; }
+      .page { padding-bottom:calc(112px + env(safe-area-inset-bottom, 0px)); }
+    }
+    @media (max-width: 360px) {
+      .content { padding-left:12px; padding-right:12px; }
+      .contact-row { grid-template-columns:1fr; }
+      .unit-row { grid-template-columns:1fr; gap:7px; }
+      .unit-pick { grid-template-columns:1fr 1fr; }
+      .price { font-size:27px; }
+      .modal-box { padding-left:12px; padding-right:12px; }
+    }
   </style>
 </head>
 <body>
@@ -1514,6 +1534,42 @@ function renderAdminHTML(nonce) {
         min-height:380px !important;
       }
     }
+    /* Tablet breakpoint: keep print editors and their previews readable on 7–10 inch screens. */
+    @media (max-width:899px) {
+      .print-choice-grid.has-open-choice { grid-template-columns:minmax(0,1fr) !important; grid-template-rows:auto !important; }
+      .print-choice-grid.has-open-choice .print-choice:not([open]),
+      .print-choice-grid.has-open-choice .print-choice[open],
+      .print-choice-grid.has-open-choice .print-shared-preview {
+        grid-column:1 !important; grid-row:auto !important; width:100%; position:relative !important; top:auto !important;
+      }
+      .print-choice-grid.has-open-choice .print-shared-preview { margin-top:0; }
+      .pr-grid { grid-template-columns:minmax(0,1fr) !important; }
+      .pr-form, .pr-side { width:100%; min-width:0; }
+      .pr-side { position:relative !important; top:auto !important; }
+    }
+
+    /* Touch-friendly controls and visible horizontal table affordance on phones. */
+    @media (max-width:760px) {
+      #appView .topbar .icon-btn { min-width:40px; min-height:40px; }
+      #appView .nav-btn { min-height:44px; }
+      #appView .actions4 { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+      #appView .actions4 .btn { min-height:44px; padding:9px 8px; font-size:13px; white-space:normal; overflow:visible; text-overflow:clip; }
+      #appView .actions5 { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+      #appView .actions5 .btn { min-height:44px; padding:8px 5px; font-size:12px; white-space:normal; overflow:visible; text-overflow:clip; }
+      #appView .dlg-actions { flex-wrap:wrap; }
+      #appView .table-wrap { scrollbar-width:thin; }
+      #appView .table-wrap::-webkit-scrollbar { display:block !important; height:6px !important; }
+      #appView .table-wrap::-webkit-scrollbar-thumb { background:#94a3b8; border-radius:99px; }
+      #appView .table-wrap::-webkit-scrollbar-track { background:var(--chip); border-radius:99px; }
+    }
+    @media (max-width:420px) {
+      #appView .header-clock { padding:5px 7px; }
+      #appView .top-actions { gap:4px; }
+      #appView .actions5 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      #appView .doc-modal-top { padding-right:32px; }
+      #appView .doc-modal-id { max-width:40%; overflow-wrap:anywhere; }
+    }
+
     @keyframes up { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
   </style>
 </head>
