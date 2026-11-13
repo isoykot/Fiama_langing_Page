@@ -1336,8 +1336,18 @@ function renderAdminHTML(nonce) {
     /* Keep each expanded print panel inside its own column. */
     .print-choice-grid { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
     .print-choice { align-self:start; min-width:0; }
+    /* When one print type is open, place its editor and the shared live preview side by side. */
+    .print-choice-grid.has-open-choice { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    .print-choice-grid.has-open-choice .print-choice:not([open]) { display:none; }
+    .print-choice-grid.has-open-choice .print-choice[open] { grid-column:1; grid-row:1; }
+    .print-choice-grid.has-open-choice .print-shared-preview { grid-column:2; grid-row:1; align-self:start; }
     /* The selected editor stays fully inside its own half-width card. */
     .print-choice-body { min-width:0; overflow:hidden; }
+    @media (max-width:760px) {
+      .print-choice-grid.has-open-choice { grid-template-columns:minmax(0,1fr); }
+      .print-choice-grid.has-open-choice .print-choice[open],
+      .print-choice-grid.has-open-choice .print-shared-preview { grid-column:1; grid-row:auto; }
+    }
     .print-choice-body .pr-grid { grid-template-columns:minmax(0,1fr) !important; }
     .print-choice-body .pr-side { min-width:0; width:100%; }
     .print-choice-body #printPrev { min-width:0; width:100%; }
@@ -4494,20 +4504,13 @@ function renderAdminHTML(nonce) {
 
       box.innerHTML = '<div class="pr-grid"><div class="pr-form">' +
           brandSection + footerSection + pageSection +
-            '<p class="pr-section-note">Change invoice logo, brand name, slogan and their sizes and positions.</p>' +
-            '<div class="grid-2">' + txt('Brand name', 'brand', 60) + num('Brand name text size (px)', 'brand_size', 10, 48) +
-              txt('Slogan', 'tagline', 120) + num('Slogan text size (px)', 'tagline_size', 8, 32) +
-              num('Logo size (px)', 'logo_w', 20, 220) +
-              num('Logo left / right position (px)', 'logo_x', -300, 300) +
-              num('Logo up / down position (px)', 'logo_y', -150, 250) + '</div>' + logo +
-          '</details>' +
-
           '<div class="pr-savebar"><button type="button" class="btn" data-action="pt-save">' + esc(t('pr_save')) + '</button>' +
             '<button type="button" class="btn ghost" data-action="pt-reset">' + esc(t('pr_reset')) + '</button></div>' +
         '</div><div class="pr-side"><div class="pr-section-title"><span class="pr-section-icon">🖨️</span>' + esc(t('pr_preview')) + '</div><div id="printPrev"></div><div id="printPreviewZoomControls"></div></div></div>';
       var grid = box.closest('.print-choice-grid');
       var sharedPreview = box.querySelector('.pr-side');
       if (grid && sharedPreview) {
+        grid.classList.add('has-open-choice');
         grid.classList.toggle('pos-active', PRINT_TAB === 'pos');
         sharedPreview.classList.add('print-shared-preview');
         grid.appendChild(sharedPreview);
@@ -4564,6 +4567,7 @@ function renderAdminHTML(nonce) {
             var preview = grid.querySelector('.print-shared-preview');
             if (preview) preview.remove();
             grid.classList.remove('pos-active');
+            grid.classList.remove('has-open-choice');
           }
           var invoiceBox = document.getElementById('printBox');
           var posBox = document.getElementById('posPrintBox');
