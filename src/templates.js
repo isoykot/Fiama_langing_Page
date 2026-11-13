@@ -1658,6 +1658,9 @@ function renderAdminHTML(nonce) {
               <span aria-hidden="true">🛡️</span>
               <span>Security &amp; account</span>
               <span class="account-menu-arrow" aria-hidden="true">›</span>
+              <button class="account-menu-item" type="button" role="menuitem" data-action="account-admins">
+                <span aria-hidden="true">👥</span><span>Admin</span><span class="account-menu-arrow" aria-hidden="true">›</span>
+              </button>
             </button>
           </div>
         </div>
@@ -1674,7 +1677,6 @@ function renderAdminHTML(nonce) {
         <button class="nav-btn" data-action="go" data-view="product" data-i18n="nav_product"></button>
         <button class="nav-btn" data-action="go" data-view="offers" data-i18n="nav_offers"></button>
         <button class="nav-btn" data-action="go" data-view="inventory" data-i18n="nav_inventory"></button>
-        <button class="nav-btn" data-action="go" data-view="admins" data-i18n="nav_admins"></button>
         <button class="nav-btn" data-action="go" data-view="logs" data-i18n="nav_logs"></button>
         <button class="nav-btn" data-action="go" data-view="settings" data-i18n="nav_settings"></button>
       </div>
@@ -1992,28 +1994,6 @@ function renderAdminHTML(nonce) {
       </section>
 
       <!-- Admins -->
-      <section id="v-admins" class="view hidden">
-        <div class="view-head"><div><h2 data-i18n="admins_title"></h2><p data-i18n="admins_sub"></p></div></div>
-        <div class="card">
-          <div class="card-head"><h3 data-i18n="sec_head"></h3><button class="btn sm ghost" data-action="sec-refresh" data-i18n="refresh"></button></div>
-          <div class="stats" id="secStats"></div>
-          <div class="row" style="justify-content:space-between;"><span class="muted" id="secInfo"></span><button class="btn sm danger" data-action="logout-all" data-i18n="logout_all_btn"></button></div>
-        </div>
-        <div class="card">
-          <h3 data-i18n="add_admin"></h3>
-          <div class="grid-2">
-            <div class="field"><label for="nuUser" data-i18n="username"></label><input class="input" id="nuUser" autocapitalize="none" placeholder="rahim"></div>
-            <div class="field"><label for="nuPass" data-i18n="pw_min8"></label><div class="pw"><input class="input" type="password" id="nuPass" autocomplete="new-password"><button type="button" class="eye" data-action="toggle-pw" data-target="nuPass" aria-label="show" tabindex="-1"></button></div></div>
-          </div>
-          <button class="btn" data-action="add-user" data-i18n="add_admin_btn"></button>
-          <div class="msg" id="userMsg"></div>
-        </div>
-        <div class="card">
-          <h3 data-i18n="admin_list"></h3>
-          <div id="userList"></div>
-        </div>
-      </section>
-
       <!-- Logs -->
       <section id="v-logs" class="view hidden">
         <div class="view-head"><div><h2 data-i18n="logs_title"></h2><p data-i18n="logs_sub"></p></div>
@@ -2106,6 +2086,35 @@ function renderAdminHTML(nonce) {
 
 
       </section>
+      <div class="security-account-modal hidden" id="adminsModal" role="dialog" aria-modal="true" aria-labelledby="adminsModalTitle">
+        <div class="security-account-backdrop" data-action="admins-modal-close"></div>
+        <div class="security-account-dialog">
+          <div class="security-account-dialog-head">
+            <div><h2 id="adminsModalTitle">👥 Admin</h2><p>Manage admin accounts and security activity</p></div>
+            <button type="button" class="icon-btn" data-action="admins-modal-close" aria-label="Close">✕</button>
+          </div>
+        <div class="view-head"><div><h2 data-i18n="admins_title"></h2><p data-i18n="admins_sub"></p></div></div>
+        <div class="card">
+          <div class="card-head"><h3 data-i18n="sec_head"></h3><button class="btn sm ghost" data-action="sec-refresh" data-i18n="refresh"></button></div>
+          <div class="stats" id="secStats"></div>
+          <div class="row" style="justify-content:space-between;"><span class="muted" id="secInfo"></span><button class="btn sm danger" data-action="logout-all" data-i18n="logout_all_btn"></button></div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="add_admin"></h3>
+          <div class="grid-2">
+            <div class="field"><label for="nuUser" data-i18n="username"></label><input class="input" id="nuUser" autocapitalize="none" placeholder="rahim"></div>
+            <div class="field"><label for="nuPass" data-i18n="pw_min8"></label><div class="pw"><input class="input" type="password" id="nuPass" autocomplete="new-password"><button type="button" class="eye" data-action="toggle-pw" data-target="nuPass" aria-label="show" tabindex="-1"></button></div></div>
+          </div>
+          <button class="btn" data-action="add-user" data-i18n="add_admin_btn"></button>
+          <div class="msg" id="userMsg"></div>
+        </div>
+        <div class="card">
+          <h3 data-i18n="admin_list"></h3>
+          <div id="userList"></div>
+        </div>
+        </div>
+      </div>
+
         <div class="security-account-modal hidden" id="securityAccountModal" role="dialog" aria-modal="true" aria-labelledby="securityAccountTitle">
           <div class="security-account-backdrop" data-action="security-modal-close"></div>
           <div class="security-account-dialog">
@@ -4877,7 +4886,7 @@ function renderAdminHTML(nonce) {
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { closeAccountMenu(); var securityModal = $('securityAccountModal'); if (securityModal) securityModal.classList.add('hidden'); }
+      if (e.key === 'Escape') { closeAccountMenu(); var securityModal = $('securityAccountModal'); if (securityModal) securityModal.classList.add('hidden'); var adminsModal = $('adminsModal'); if (adminsModal) adminsModal.classList.add('hidden'); }
     });
 
     document.addEventListener('click', function (e) {
@@ -4897,6 +4906,16 @@ function renderAdminHTML(nonce) {
       else if (a === 'security-modal-close') {
         var securityModal = $('securityAccountModal');
         if (securityModal) securityModal.classList.add('hidden');
+      }
+      else if (a === 'account-admins') {
+        closeAccountMenu();
+        var adminsModal = $('adminsModal');
+        if (adminsModal) adminsModal.classList.remove('hidden');
+        loadUsers();
+      }
+      else if (a === 'admins-modal-close') {
+        var adminsModal = $('adminsModal');
+        if (adminsModal) adminsModal.classList.add('hidden');
       }
       else if (a === 'toggle-pw') togglePw(el);
       else if (a === 'save-inv') saveInventory();
