@@ -1038,6 +1038,29 @@ function renderAdminHTML(nonce) {
       height:auto !important;
       min-height:0 !important;
     }
+    /* Security & Account is a div-based accordion, so expand its parent explicitly. */
+    #v-settings > .settings-security-card.is-open {
+      display:block !important;
+      box-sizing:border-box !important;
+      height:auto !important;
+      min-height:64px !important;
+      overflow:visible !important;
+      align-items:initial !important;
+      padding:0 0 14px !important;
+    }
+    #v-settings > .settings-security-card.is-open > .acc-head {
+      width:100%;
+      display:flex;
+      min-height:62px;
+    }
+    #v-settings > .settings-security-card #saWrap {
+      box-sizing:border-box;
+      width:100%;
+      padding:0 16px;
+    }
+    #v-settings > .settings-security-card #saWrap > .grid-2 {
+      align-items:start;
+    }
     .clock-settings-card { border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--card); }
     .clock-hero { padding:20px; border-radius:16px; color:#fff; background:linear-gradient(135deg,#064e3b,#0f766e 58%,#0ea5a4); text-align:center; margin-bottom:16px; box-shadow:0 12px 28px rgba(4,120,87,.18); }
     .clock-hero .clock-hero-time { font-size:clamp(28px,6vw,42px); line-height:1.15; font-weight:900; letter-spacing:1px; font-variant-numeric:tabular-nums; }
@@ -1970,7 +1993,7 @@ function renderAdminHTML(nonce) {
         <div class="view-head"><div><h2 data-i18n="settings_title"></h2><p data-i18n="settings_sub"></p></div></div>
 
         <div class="card settings-security-card">
-          <button type="button" class="acc-head" data-action="sa-toggle">
+          <button type="button" class="acc-head" data-action="sa-toggle" aria-expanded="false" aria-controls="saWrap">
             <span class="acc-title" data-i18n="sa_title"></span><span class="acc-arrow" id="saArrow">▸</span>
           </button>
           <div id="saWrap" class="hidden" style="margin-top:12px;">
@@ -4411,12 +4434,18 @@ function renderAdminHTML(nonce) {
         : '<div class="empty">' + esc(t('no_logs')) + '</div>');
     }
 
-    // Settings > Security & account: ক্লিক করলে খোলে
-    async function toggleSettingsSecurity() {
+    // Settings > Security & account: expand the parent card with its content.
+    function toggleSettingsSecurity() {
       var w = $('saWrap');
+      var card = w && w.closest('.settings-security-card');
+      var trigger = document.querySelector('[data-action="sa-toggle"]');
+      var arrow = $('saArrow');
+      if (!w || !card) return;
       var open = w.classList.contains('hidden');
       w.classList.toggle('hidden', !open);
-      $('saArrow').textContent = open ? '▾' : '▸';
+      card.classList.toggle('is-open', open);
+      if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (arrow) arrow.textContent = open ? '▾' : '▸';
     }
 
     async function loadSecurity() {
