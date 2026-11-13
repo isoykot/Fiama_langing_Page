@@ -1090,6 +1090,20 @@ function renderAdminHTML(nonce) {
       -webkit-text-fill-color:#0f172a !important;
       box-shadow:none;
     }
+    /* Login password visibility control is always Day Mode, independent of admin theme. */
+    #loginView .login-card .pw .eye,
+    #loginView .login-card .pw .eye:hover,
+    #loginView .login-card .pw .eye.on{
+      background:#fff !important;
+      color:#475569 !important;
+      border:1px solid #cbd5e1 !important;
+      box-shadow:none !important;
+      filter:none !important;
+    }
+    #loginView .login-card .pw .eye:focus-visible{
+      outline:2px solid #059669 !important;
+      outline-offset:2px;
+    }
     #loginView .login-card input.input::placeholder{color:#64748b !important;opacity:1}
     #loginView .login-card input.input:-webkit-autofill,
     #loginView .login-card input.input:-webkit-autofill:hover,
