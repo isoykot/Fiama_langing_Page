@@ -183,6 +183,7 @@ export const ADMIN_STRINGS = {
   pay_method: ["পেমেন্টের ধরন", "Payment method"],
   pay_select: ["পেমেন্ট নির্বাচন করুন", "Select payment"],
   pay_paid: ["পরিশোধিত", "Paid"],
+  pay_delivery: ["ডেলিভারি চার্জ পরিশোধ", "Pay Delivery Charge"],
   pay_cod: ["ক্যাশ অন ডেলিভারি (COD)", "Cash on Delivery (COD)"],
   pay_partial: ["আংশিক পেমেন্ট", "Partial payment"],
   pay_received: ["গ্রাহকের কাছ থেকে পাওয়া টাকা (৳)", "Amount received (৳)"],
