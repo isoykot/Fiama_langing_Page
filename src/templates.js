@@ -3094,7 +3094,10 @@ function renderAdminHTML(nonce) {
         '<section class="inv-payment"><h3>Payment Information</h3><div class="inv-pay-row"><span>Payment method</span><strong>' + esc(methodLabel) + '</strong></div>' +
         (method === 'Paid' || method === 'Partial' ? '<div class="inv-pay-row"><span>Amount received</span><strong>' + money(received) + '</strong></div>' : '') +
         '<div class="inv-pay-row inv-balance"><span>' + (due>0?'Balance due':'Payment status') + '</span><strong>' + (due>0?money(due):'Paid in full') + '</strong></div></section>' +
-        '<div class="inv-bottom"><div class="inv-thanks-block"><div class="inv-thanks">' + esc(c.footer_title || 'Thank You!') + '</div><div class="inv-thanks-sub">' + esc(c.footer_message || 'for shopping with us! ❤️') + '</div></div><div class="inv-brand-address"><strong>- ' + esc(c.footer_brand || c.brand || 'ABC Fashion') + ' -</strong><span><i class="inv-address-icon">●</i> ' + esc(c.footer_address || '') + '</span><span><i class="inv-address-icon">☎</i> Phone: ' + esc(c.footer_phone || c.contact || '') + '</span></div></div></div>';
+        '<div class="inv-bottom">' +
+         (c.show_thank_you !== false ? '<div class="inv-thanks-block"><div class="inv-thanks">' + esc(c.footer_title || 'Thank You!') + '</div><div class="inv-thanks-sub">' + esc(c.footer_message || 'for shopping with us! ❤️') + '</div></div>' : '') +
+         (c.show_brand_address !== false ? '<div class="inv-brand-address"><strong>- ' + esc(c.footer_brand || c.brand || 'ABC Fashion') + ' -</strong><span><i class="inv-address-icon">●</i> ' + esc(c.footer_address || '') + '</span><span><i class="inv-address-icon">☎</i> Phone: ' + esc(c.footer_phone || c.contact || '') + '</span></div>' : '') +
+         '</div></div>';
     }
 
     function pdBody(o, c) {
@@ -4567,11 +4570,13 @@ function renderAdminHTML(nonce) {
         : '<details class="pr-section pr-accordion"><summary class="pr-section-title"><span class="pr-section-icon">✍️</span>Footer</summary>' +
             '<p class="pr-section-note">Edit the Thank You message, brand address and phone. Adjust text size and position independently.</p>' +
             '<div class="grid-2">' +
+              '<div class="field"><label class="chk"><input type="checkbox" data-pf="show_thank_you"' + (c.show_thank_you !== false ? ' checked' : '') + '> <span>Show Thank You message on invoice</span></label></div>' +
               txt('Thank You heading', 'footer_title', 100) + num('Thank You heading size (px)', 'footer_title_size', 16, 80) +
               '<div class="field"><label>Thank You message</label><textarea class="input" rows="2" maxlength="200" data-pf="footer_message">' + esc(c.footer_message || 'for shopping with us! ❤️') + '</textarea></div>' +
               num('Message text size (px)', 'footer_size', 8, 32) +
               num('Message left / right position (px)', 'footer_x', -300, 300) +
               num('Message up / down position (px)', 'footer_y', -300, 300) +
+              '<div class="field"><label class="chk"><input type="checkbox" data-pf="show_brand_address"' + (c.show_brand_address !== false ? ' checked' : '') + '> <span>Show brand address on invoice</span></label></div>' +
               txt('Brand name in footer', 'footer_brand', 80) +
               txt('Address', 'footer_address', 180) +
               txt('Phone number', 'footer_phone', 80) +
