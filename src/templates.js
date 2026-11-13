@@ -3293,7 +3293,7 @@ function renderAdminHTML(nonce) {
           '<span>' + esc(o.phone || '') + '</span><br>' +
           '<span>' + esc(o.delivery_area || '') + '</span><br>' +
           '<span>' + esc(o.address || '') + '</span></div><hr class="receipt-rule">' +
-          '<div class="receipt-items">' + items + '</div><hr class="receipt-dash"><div>' + totals + '</div>'
+          '<div class="receipt-items">' + items + '</div><hr class="receipt-dash"><div>' + totals + '</div>' +
           '<div class="receipt-grand"><span>Grand Total</span><span>' + money(due) + ' BDT</span></div>' +
           (S.payment ? (function () {
             var method = String(o.payment_method || '');
