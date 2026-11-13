@@ -1612,6 +1612,175 @@ function renderAdminHTML(nonce) {
       #appView .doc-modal-id { max-width:40%; overflow-wrap:anywhere; }
     }
 
+    /* Admin workspace Night Mode polish. Deliberately scoped to #appView:
+       login screen and the Day/Night toggle logic remain unchanged. */
+    :root[data-theme="dark"] #appView {
+      color-scheme: dark;
+      background: var(--bg);
+      color: var(--text);
+    }
+    :root[data-theme="dark"] #appView .card,
+    :root[data-theme="dark"] #appView .settings-accordion,
+    :root[data-theme="dark"] #appView .clock-settings-card,
+    :root[data-theme="dark"] #appView .print-choice,
+    :root[data-theme="dark"] #appView .pr-section,
+    :root[data-theme="dark"] #appView .pr-side,
+    :root[data-theme="dark"] #appView .world-clock-card,
+    :root[data-theme="dark"] #appView .clock-manual-box,
+    :root[data-theme="dark"] #appView .ed-faq,
+    :root[data-theme="dark"] #appView .nt-prev,
+    :root[data-theme="dark"] #appView .notice,
+    :root[data-theme="dark"] #appView .reward,
+    :root[data-theme="dark"] #appView .summary,
+    :root[data-theme="dark"] #appView .qty-box,
+    :root[data-theme="dark"] #appView .var-chip,
+    :root[data-theme="dark"] #appView .del-card,
+    :root[data-theme="dark"] #appView .security-account-dialog {
+      background-color: var(--card);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    :root[data-theme="dark"] #appView .settings-accordion > summary,
+    :root[data-theme="dark"] #appView .print-choice > summary,
+    :root[data-theme="dark"] #appView .pr-section-title,
+    :root[data-theme="dark"] #appView .acc-head,
+    :root[data-theme="dark"] #appView .filter-row,
+    :root[data-theme="dark"] #appView .toolbar,
+    :root[data-theme="dark"] #appView .list-item,
+    :root[data-theme="dark"] #appView .order-card,
+    :root[data-theme="dark"] #appView .unit-row,
+    :root[data-theme="dark"] #appView .kpi,
+    :root[data-theme="dark"] #appView .chip,
+    :root[data-theme="dark"] #appView .clock-theme-choice {
+      background-color: var(--chip);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    :root[data-theme="dark"] #appView .settings-body,
+    :root[data-theme="dark"] #appView .print-choice-body,
+    :root[data-theme="dark"] #appView .pr-form,
+    :root[data-theme="dark"] #appView .pr-grid,
+    :root[data-theme="dark"] #appView .table-wrap {
+      color: var(--text);
+    }
+    :root[data-theme="dark"] #appView .input,
+    :root[data-theme="dark"] #appView input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+    :root[data-theme="dark"] #appView select,
+    :root[data-theme="dark"] #appView textarea {
+      background-color: var(--input);
+      color: var(--text);
+      border-color: var(--line);
+      color-scheme: dark;
+    }
+    :root[data-theme="dark"] #appView select option {
+      background: var(--card);
+      color: var(--text);
+    }
+    :root[data-theme="dark"] #appView table {
+      background: var(--card);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    :root[data-theme="dark"] #appView table th {
+      background: #1a2942;
+      color: #f1f5f9;
+      border-color: var(--line);
+    }
+    :root[data-theme="dark"] #appView table td {
+      color: var(--text);
+      border-color: var(--line);
+    }
+    :root[data-theme="dark"] #appView .pid,
+    :root[data-theme="dark"] #appView .oid-chip,
+    :root[data-theme="dark"] #appView .reward-code span,
+    :root[data-theme="dark"] #appView .print-choice .pr-section,
+    :root[data-theme="dark"] #appView .clock-theme-choice {
+      background: var(--chip);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    :root[data-theme="dark"] #appView .btn.ghost,
+    :root[data-theme="dark"] #appView .eye {
+      background: var(--chip);
+      color: var(--text);
+      border-color: var(--line);
+    }
+    :root[data-theme="dark"] #appView .field label,
+    :root[data-theme="dark"] #appView .hint-text,
+    :root[data-theme="dark"] #appView .muted,
+    :root[data-theme="dark"] #appView .sales,
+    :root[data-theme="dark"] #appView .slabel {
+      color: var(--muted);
+    }
+    :root[data-theme="dark"] #appView input[type="checkbox"],
+    :root[data-theme="dark"] #appView input[type="radio"] {
+      accent-color: #34d399;
+    }
+    #appView .security-account-modal {
+      overscroll-behavior: contain;
+      padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+    }
+    #appView .security-account-dialog {
+      min-width: 0;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    #appView .table-wrap {
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 760px) {
+      #appView .security-account-modal {
+        align-items: flex-end;
+        padding: 8px 8px max(8px, env(safe-area-inset-bottom, 0px));
+      }
+      #appView .security-account-dialog {
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100dvh - 16px - env(safe-area-inset-top, 0px));
+        padding: 14px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+        border-radius: 18px 18px 12px 12px;
+      }
+      #appView .security-account-dialog-head {
+        position: sticky;
+        top: -14px;
+        z-index: 5;
+        margin: -14px -12px 12px;
+        padding: 14px 12px 12px;
+        background: var(--card);
+      }
+      #appView .security-account-dialog-head h2 { font-size: 18px; }
+      #appView .grid-2,
+      #appView .grid-3,
+      #appView .grid-fields {
+        grid-template-columns: minmax(0, 1fr);
+        min-width: 0;
+      }
+      #appView .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #appView .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #appView .actions4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #appView .row { min-width: 0; }
+      #appView .row > * { max-width: 100%; }
+      #appView .field,
+      #appView .field > *,
+      #appView .settings-body,
+      #appView .print-choice-grid,
+      #appView .pr-form,
+      #appView .pr-side { min-width: 0; }
+      #appView .settings-accordion > summary { padding-left: 14px !important; padding-right: 14px !important; }
+      #appView .table-wrap table { min-width: 600px; }
+      #appView .btn { min-height: 44px; }
+    }
+    @media (max-width: 380px) {
+      #appView .security-account-dialog { padding-left: 10px; padding-right: 10px; }
+      #appView .stats { gap: 7px; }
+      #appView .stat { padding: 10px; gap: 8px; }
+      #appView .sval { font-size: 17px; }
+      #appView .grid-4 { grid-template-columns: minmax(0, 1fr); }
+      #appView .table-wrap table { min-width: 560px; }
+    }
+
     @keyframes up { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
   </style>
 </head>
