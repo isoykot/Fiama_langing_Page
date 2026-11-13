@@ -1486,6 +1486,22 @@ function renderAdminHTML(nonce) {
       #appView .nav-btn { padding:8px 9px; font-size:12px; }
       #appView .view-head h2 { font-size:18px; }
     }
+    /* POS layout: live preview on the left, POS settings on the right. */
+    .print-choice-grid.has-open-choice.pos-active .print-choice[open] {
+      grid-column:2 !important;
+      grid-row:2 !important;
+    }
+    .print-choice-grid.has-open-choice.pos-active .print-shared-preview {
+      grid-column:1 !important;
+      grid-row:2 !important;
+    }
+    @media (max-width:760px) {
+      .print-choice-grid.has-open-choice.pos-active .print-choice[open],
+      .print-choice-grid.has-open-choice.pos-active .print-shared-preview {
+        grid-column:1 !important;
+        grid-row:auto !important;
+      }
+    }
     /* Give Invoice and POS live previews enough vertical room to show the full page/receipt. */
     .pr-side #printPrev {
       height:clamp(520px,78vh,900px) !important;
@@ -3264,7 +3280,7 @@ function renderAdminHTML(nonce) {
           '<div class="receipt-grand"><span>Grand Total</span><span>' + money(o.total || 0) + ' BDT</span></div>' +
           (S.payment ? '<div class="receipt-cod">Cash on Delivery (COD) — ' + money(o.total || 0) + '</div>' : '') +
           '<div class="receipt-footer">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
-          (S.contact && contact ? '<br>Contact: ' + esc(contact) : '') + '</div></div>';
+          (S.contact && contact ? '<br>Contact Us: ' + esc(contact) : '') + '</div></div>';
       }
       var invoiceCss = pdInvoiceCss(sc, c) + pdInvoicePageCss(sc, c);
       return '<style>' + invoiceCss + '</style><div id="' + sc + '" class="doc-invoice">' + pdInvoiceBody(o, c) + '</div>';
@@ -4528,7 +4544,7 @@ function renderAdminHTML(nonce) {
       var brandSection = PRINT_TAB === 'pos'
         ? '<details class="pr-section pr-accordion" open><summary class="pr-section-title"><span class="pr-section-icon">🏷️</span>Brand and Logo</summary>' +
             '<p class="pr-section-note">Set the POS receipt brand, slogan, contact number and logo.</p>' +
-            '<div class="grid-2">' + txt('Brand name', 'brand', 60) + txt('Slogan', 'tagline', 120) + txt('Contact number', 'contact', 80) + '</div>' + logo +
+            '<div class="grid-2">' + txt('Brand name', 'brand', 60) + txt('Slogan', 'tagline', 120) + '</div>' + logo +
           '</details>'
         : '<details class="pr-section pr-accordion" open><summary class="pr-section-title"><span class="pr-section-icon">🏷️</span>Brand and Logo</summary>' +
             '<p class="pr-section-note">Change invoice logo, brand name, slogan and their sizes and positions.</p>' +
@@ -4542,6 +4558,7 @@ function renderAdminHTML(nonce) {
         ? '<details class="pr-section pr-accordion"><summary class="pr-section-title"><span class="pr-section-icon">✍️</span>Footer</summary>' +
             '<p class="pr-section-note">Edit the message shown at the bottom of the POS receipt.</p>' +
             '<div class="grid-2">' +
+              txt('Contact Us phone number', 'contact', 80) +
               '<div class="field"><label>Footer (Bangla)</label><textarea class="input" rows="2" maxlength="200" data-pf="footer_bn">' + esc(c.footer_bn || '') + '</textarea></div>' +
               '<div class="field"><label>Footer (English)</label><textarea class="input" rows="2" maxlength="200" data-pf="footer_en">' + esc(c.footer_en || '') + '</textarea></div>' +
             '</div>' +
