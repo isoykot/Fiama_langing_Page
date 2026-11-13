@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fiama",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-09",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "db",
+      "database_id": "9e32410f-e4c3-493e-ba9c-21be31f097bb"
+    }
+  ]
+}
