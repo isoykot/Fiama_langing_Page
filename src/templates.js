@@ -3038,7 +3038,7 @@ function renderAdminHTML(nonce) {
         P + '.pd-pay{margin-top:8px;padding:' + (pad + 2) + 'px 8px;border:1px dashed ' + c.primary + ';border-radius:' + rad + 'px;color:' + c.primary + ';font-weight:700}' +
         P + '.pd-foot{text-align:center;margin-top:10px;font-size:' + Math.round(fs * 0.9) + 'px;opacity:.75}' +
         P + '.pd-items{margin:' + (pad + 4) + 'px 0}' +
-        P + '.pd-item{border-bottom:1px dotted ' + c.line + ';padding:' + pad + 'px 0}' +
+        P + '.pd-item{border-bottom:' + (lines.length > 1 ? '1px dotted ' + c.line : 'none') + ';padding:' + pad + 'px 0}' +
         P + '.pd-name{font-weight:700;overflow-wrap:anywhere;word-break:break-word;white-space:normal;line-height:1.35}' +
         P + '.pd-sub{display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;opacity:.9;margin-top:2px}' +
         P + '.pd-wm{position:absolute;top:38%;left:0;right:0;text-align:center;font-size:' + Math.round(fs * 3) + 'px;font-weight:900;opacity:.07;transform:rotate(-25deg);pointer-events:none;color:' + c.primary + ';white-space:nowrap}' +
@@ -3276,7 +3276,7 @@ function renderAdminHTML(nonce) {
           '#' + sc + ' .receipt-rule{border:0;border-top:1px solid #000;margin:7px 0}#' + sc + ' .receipt-dash{border:0;border-top:1px dashed #777;margin:8px 0}' +
           '#' + sc + ' .receipt-label{font-size:9px;font-weight:700;letter-spacing:.5px;color:#555;margin-bottom:2px}' +
           '#' + sc + ' .receipt-customer{margin:8px 0 10px;font-size:10px;line-height:1.45}#' + sc + ' .receipt-customer strong{font-size:12px}' +
-          '#' + sc + ' .receipt-item{padding:4px 0;border-bottom:1px dotted #aaa}#' + sc + ' .receipt-item>strong{font-size:11px;display:block}' +
+          '#' + sc + ' .receipt-item{padding:4px 0;border-bottom:' + (lines.length > 1 ? '1px dotted #aaa' : 'none') + '}#' + sc + ' .receipt-item>strong{font-size:11px;display:block}' +
           '#' + sc + ' .receipt-item-sub{display:flex;justify-content:space-between;gap:5px;font-size:9px;margin-top:2px;padding-left:12px}' +
           '#' + sc + ' .receipt-row{display:flex;justify-content:space-between;gap:8px;font-size:10px;margin:4px 0}' +
           '#' + sc + ' .receipt-grand{display:flex;justify-content:space-between;gap:8px;background:#000;color:#fff;padding:8px 9px;margin:9px 0 7px;font-size:13px;font-weight:800;border-radius:4px}' +
