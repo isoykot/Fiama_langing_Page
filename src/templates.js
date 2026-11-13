@@ -1070,7 +1070,7 @@ function renderAdminHTML(nonce) {
     .security-account-dialog-head p{font-size:13px;color:var(--muted);margin:0}
     .security-account-dialog #saWrap{display:block!important;margin-top:0!important}
     @media(max-width:600px){.security-account-modal{padding:10px;align-items:flex-end}.security-account-dialog{max-height:92dvh;border-radius:18px;padding:14px}}
-    /* Manu dropdown uses the same visual language as Account Information. */
+    /* Menu dropdown uses the same visual language as Account Information. */
     .brand-menu-wrap{position:relative;display:inline-flex;align-items:center;flex:0 0 auto}
     .brand-menu-trigger{border:0;cursor:pointer;touch-action:manipulation}
     .brand-menu-trigger:focus-visible{outline:2px solid #a7f3d0;outline-offset:3px}
@@ -1200,28 +1200,35 @@ function renderAdminHTML(nonce) {
     .ed-row .input { min-width: 0; }
     .ed-row .grow { flex: 1; min-width: 0; }
 
-    /* Keep all three trust badge editors usable on narrow phone screens. */
+    /* Keep all three trust badge editors and all their fields visible on phones. */
     @media (max-width: 600px) {
-      #trustEditor { width: 100%; min-width: 0; }
+      #trustEditor { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: 100%; min-width: 0; }
       #trustEditor .ed-row {
         display: grid;
-        grid-template-columns: 56px minmax(0, 1fr);
+        grid-template-columns: 48px minmax(0, 1fr);
+        grid-template-rows: minmax(42px, auto) minmax(42px, auto);
         gap: 8px;
         width: 100%;
         min-width: 0;
         align-items: center;
+        margin: 0;
       }
       #trustEditor .ed-row .emoji {
         grid-column: 1;
         grid-row: 1 / span 2;
-        width: 56px;
-        min-width: 56px;
+        width: 48px;
+        min-width: 0;
+        max-width: 100%;
       }
       #trustEditor .ed-row .grow {
         grid-column: 2;
         width: 100%;
         min-width: 0;
+        max-width: 100%;
       }
+      #trustEditor .ed-row .grow:nth-of-type(2) { grid-row: 1; }
+      #trustEditor .ed-row .grow:nth-of-type(3) { grid-row: 2; }
+      #trustEditor .ed-row .input { font-size: 14px; padding: 10px 9px; }
     }
     .ed-faq { border: 1px dashed var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
     .ed-faq .grid-2 { gap: 10px; }
