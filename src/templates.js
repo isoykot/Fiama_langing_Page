@@ -1657,7 +1657,7 @@ function renderAdminHTML(nonce) {
             <button class="account-menu-item" type="button" role="menuitem" data-action="account-admins"><span aria-hidden="true">👥</span><span>Admin</span><span class="account-menu-arrow" aria-hidden="true">›</span></button>
             <button class="account-menu-item" type="button" role="menuitem" data-action="account-logs"><span aria-hidden="true">📋</span><span>Logs</span><span class="account-menu-arrow" aria-hidden="true">›</span></button>
             <button class="account-menu-item" type="button" role="menuitem" data-action="account-settings"><span aria-hidden="true">⚙️</span><span>Settings</span><span class="account-menu-arrow" aria-hidden="true">›</span></button>
-          </div>          </div>
+          </div>
         </div>
         <button class="icon-btn" data-action="logout" data-tip="logout" title="Logout" aria-label="Logout">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M5.6 6.6a8 8 0 1 0 12.8 0"/></svg>
@@ -4875,7 +4875,14 @@ function renderAdminHTML(nonce) {
 
     var accountModalHistoryDepth = 0;
     function openAccountPanel(modalId, view) {
-      go(view);
+      VIEW = view;
+      store.set('admin_view', view);
+      document.querySelectorAll('.view').forEach(function (v) {
+        v.classList.toggle('hidden', v.id !== 'v-' + view);
+      });
+      document.querySelectorAll('.nav-btn').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-view') === view);
+      });
       var modal = $(modalId);
       if (!modal) return;
       document.querySelectorAll('.security-account-modal').forEach(function (m) { m.classList.add('hidden'); });
