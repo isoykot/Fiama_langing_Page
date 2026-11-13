@@ -1653,16 +1653,11 @@ function renderAdminHTML(nonce) {
           </button>
           <div class="account-menu hidden" id="accountMenu" role="menu" aria-labelledby="accountMenuTrigger">
             <div class="account-menu-heading">Account Information</div>
-            <button class="account-menu-item" type="button" role="menuitem"
-              data-action="account-security">
-              <span aria-hidden="true">🛡️</span>
-              <span>Security &amp; account</span>
-              <span class="account-menu-arrow" aria-hidden="true">›</span>
-              <button class="account-menu-item" type="button" role="menuitem" data-action="account-admins">
-                <span aria-hidden="true">👥</span><span>Admin</span><span class="account-menu-arrow" aria-hidden="true">›</span>
-              </button>
-            </button>
-          </div>
+            <button class="account-menu-item" type="button" role="menuitem" data-action="account-security"><span aria-hidden="true">🛡️</span><span>Security &amp; account</span><span class="account-menu-arrow" aria-hidden="true">›</span></button>
+            <button class="account-menu-item" type="button" role="menuitem" data-action="account-admins"><span aria-hidden="true">👥</span><span>Admin</span><span class="account-menu-arrow" aria-hidden="true">›</span></button>
+            <button class="account-menu-item" type="button" role="menuitem" data-action="account-logs"><span aria-hidden="true">📋</span><span>Logs</span><span class="account-menu-arrow" aria-hidden="true">›</span></button>
+            <button class="account-menu-item" type="button" role="menuitem" data-action="account-settings"><span aria-hidden="true">⚙️</span><span>Settings</span><span class="account-menu-arrow" aria-hidden="true">›</span></button>
+          </div>          </div>
         </div>
         <button class="icon-btn" data-action="logout" data-tip="logout" title="Logout" aria-label="Logout">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M5.6 6.6a8 8 0 1 0 12.8 0"/></svg>
@@ -1677,8 +1672,6 @@ function renderAdminHTML(nonce) {
         <button class="nav-btn" data-action="go" data-view="product" data-i18n="nav_product"></button>
         <button class="nav-btn" data-action="go" data-view="offers" data-i18n="nav_offers"></button>
         <button class="nav-btn" data-action="go" data-view="inventory" data-i18n="nav_inventory"></button>
-        <button class="nav-btn" data-action="go" data-view="logs" data-i18n="nav_logs"></button>
-        <button class="nav-btn" data-action="go" data-view="settings" data-i18n="nav_settings"></button>
       </div>
     </nav>
 
@@ -1994,16 +1987,25 @@ function renderAdminHTML(nonce) {
       </section>
 
       <!-- Admins -->
-      <!-- Logs -->
-      <section id="v-logs" class="view hidden">
+      <div class="security-account-modal hidden" id="logsModal" role="dialog" aria-modal="true" aria-labelledby="logsModalTitle">
+        <div class="security-account-backdrop" data-action="account-panel-close"></div>
+        <div class="security-account-dialog">
+          <div class="security-account-dialog-head"><div><h2 id="logsModalTitle">📋 Logs</h2><p>Review account and order activity</p></div><button type="button" class="icon-btn" data-action="account-panel-close" aria-label="Close">✕</button></div>
+                <section id="v-logs" class="view">
         <div class="view-head"><div><h2 data-i18n="logs_title"></h2><p data-i18n="logs_sub"></p></div>
           <button class="btn ghost sm" data-action="refresh" data-i18n="refresh"></button></div>
         <div class="chips" id="logChips"></div>
         <div class="card"><div class="table-wrap" id="logBox"></div></div>
       </section>
 
-      <!-- Settings -->
-      <section id="v-settings" class="view hidden">
+
+        </div>
+      </div>
+      <div class="security-account-modal hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+        <div class="security-account-backdrop" data-action="account-panel-close"></div>
+        <div class="security-account-dialog">
+          <div class="security-account-dialog-head"><div><h2 id="settingsModalTitle">⚙️ Settings</h2><p>Manage admin panel settings</p></div><button type="button" class="icon-btn" data-action="account-panel-close" aria-label="Close">✕</button></div>
+                <section id="v-settings" class="view">
         <div class="view-head"><div><h2 data-i18n="settings_title"></h2><p data-i18n="settings_sub"></p></div></div>
 
         <details class="card settings-accordion" id="clockSettingsAccordion">
@@ -2086,6 +2088,8 @@ function renderAdminHTML(nonce) {
 
 
       </section>
+        </div>
+      </div>
       <div class="security-account-modal hidden" id="adminsModal" role="dialog" aria-modal="true" aria-labelledby="adminsModalTitle">
         <div class="security-account-backdrop" data-action="admins-modal-close"></div>
         <div class="security-account-dialog">
@@ -2762,6 +2766,8 @@ function renderAdminHTML(nonce) {
     /* ---------- Navigation ---------- */
 
     function go(view) {
+      if (view === 'logs' && $('logsModal')) { openAccountPanel('logsModal', 'logs'); loadLogs(); return; }
+      if (view === 'settings' && $('settingsModal')) { openAccountPanel('settingsModal', 'settings'); loadIdGenerator(); return; }
       VIEW = view;
       store.set('admin_view', view);
       document.querySelectorAll('.view').forEach(function (v) {
@@ -4867,6 +4873,31 @@ function renderAdminHTML(nonce) {
     document.addEventListener('pointerup', endInvoicePan);
     document.addEventListener('pointercancel', endInvoicePan);
 
+    var accountModalHistoryDepth = 0;
+    function openAccountPanel(modalId, view) {
+      go(view);
+      var modal = $(modalId);
+      if (!modal) return;
+      document.querySelectorAll('.security-account-modal').forEach(function (m) { m.classList.add('hidden'); });
+      modal.classList.remove('hidden');
+      if (window.history && window.history.pushState) {
+        window.history.pushState({ accountPanel: modalId }, '');
+        accountModalHistoryDepth++;
+      }
+    }
+    function closeAccountPanel(fromPopState) {
+      var open = document.querySelector('.security-account-modal:not(.hidden)');
+      if (!open) return;
+      open.classList.add('hidden');
+      if (!fromPopState && accountModalHistoryDepth > 0) {
+        accountModalHistoryDepth--;
+        window.history.back();
+      } else if (fromPopState && accountModalHistoryDepth > 0) {
+        accountModalHistoryDepth--;
+      }
+    }
+    window.addEventListener('popstate', function () { closeAccountPanel(true); });
+
     function toggleAccountMenu(forceOpen) {
       var menu = $('accountMenu');
       var trigger = $('accountMenuTrigger');
@@ -4886,7 +4917,7 @@ function renderAdminHTML(nonce) {
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { closeAccountMenu(); var securityModal = $('securityAccountModal'); if (securityModal) securityModal.classList.add('hidden'); var adminsModal = $('adminsModal'); if (adminsModal) adminsModal.classList.add('hidden'); }
+      if (e.key === 'Escape') { closeAccountMenu(); closeAccountPanel(false); }
     });
 
     document.addEventListener('click', function (e) {
@@ -4900,22 +4931,28 @@ function renderAdminHTML(nonce) {
       else if (a === 'account-menu-toggle') toggleAccountMenu();
       else if (a === 'account-security') {
         closeAccountMenu();
-        var securityModal = $('securityAccountModal');
-        if (securityModal) securityModal.classList.remove('hidden');
+        openAccountPanel('securityAccountModal', 'dashboard');
       }
       else if (a === 'security-modal-close') {
-        var securityModal = $('securityAccountModal');
-        if (securityModal) securityModal.classList.add('hidden');
+        closeAccountPanel(false);
       }
       else if (a === 'account-admins') {
         closeAccountMenu();
-        var adminsModal = $('adminsModal');
-        if (adminsModal) adminsModal.classList.remove('hidden');
+        openAccountPanel('adminsModal', 'dashboard');
         loadUsers();
       }
-      else if (a === 'admins-modal-close') {
-        var adminsModal = $('adminsModal');
-        if (adminsModal) adminsModal.classList.add('hidden');
+      else if (a === 'admins-modal-close' || a === 'account-panel-close') {
+        closeAccountPanel(false);
+      }
+      else if (a === 'account-logs') {
+        closeAccountMenu();
+        openAccountPanel('logsModal', 'logs');
+        loadLogs();
+      }
+      else if (a === 'account-settings') {
+        closeAccountMenu();
+        openAccountPanel('settingsModal', 'settings');
+        loadIdGenerator();
       }
       else if (a === 'toggle-pw') togglePw(el);
       else if (a === 'save-inv') saveInventory();
