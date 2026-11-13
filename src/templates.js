@@ -1199,6 +1199,30 @@ function renderAdminHTML(nonce) {
     .ed-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
     .ed-row .input { min-width: 0; }
     .ed-row .grow { flex: 1; min-width: 0; }
+
+    /* Keep all three trust badge editors usable on narrow phone screens. */
+    @media (max-width: 600px) {
+      #trustEditor { width: 100%; min-width: 0; }
+      #trustEditor .ed-row {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr);
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+        align-items: center;
+      }
+      #trustEditor .ed-row .emoji {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        width: 56px;
+        min-width: 56px;
+      }
+      #trustEditor .ed-row .grow {
+        grid-column: 2;
+        width: 100%;
+        min-width: 0;
+      }
+    }
     .ed-faq { border: 1px dashed var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
     .ed-faq .grid-2 { gap: 10px; }
     .ed-faq .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; font-weight: 800; color: var(--muted); }
@@ -1929,7 +1953,7 @@ function renderAdminHTML(nonce) {
             data-action="brand-menu-toggle" aria-haspopup="true" aria-expanded="false"
             aria-controls="brandMenu" title="Menu">🛍️</button>
           <div class="brand-menu hidden" id="brandMenu" role="menu" aria-labelledby="brandMenuTrigger">
-            <div class="brand-menu-heading">Manu</div>
+            <div class="brand-menu-heading">Menu</div>
             <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="product"><span aria-hidden="true">🛍️</span><span data-i18n="nav_product">Product</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
             <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="offers"><span aria-hidden="true">🎟️</span><span data-i18n="nav_offers">Offers &amp; Coupons</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
             <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="inventory"><span aria-hidden="true">📦</span><span data-i18n="nav_inventory">Inventory</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
