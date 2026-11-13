@@ -1061,6 +1061,16 @@ function renderAdminHTML(nonce) {
     #v-settings > .settings-security-card #saWrap > .grid-2 {
       align-items:start;
     }
+    .account-menu-wrap{position:relative;display:inline-flex;align-items:center}
+    .account-menu-trigger{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:0}
+    .account-menu-trigger:focus-visible,.account-menu-item:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+    .account-menu{position:absolute;right:0;top:calc(100% + 12px);z-index:1000;width:min(280px,calc(100vw - 32px));padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 16px 42px rgba(0,0,0,.18)}
+    .account-menu.hidden{display:none}
+    .account-menu-heading{padding:10px 12px 9px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.02em}
+    .account-menu-item{width:100%;display:flex;align-items:center;gap:10px;padding:12px;border:0;border-radius:9px;background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+    .account-menu-item:hover{background:var(--soft)}
+    .account-menu-arrow{margin-left:auto;color:var(--muted);font-size:22px;line-height:1}
+    @media(max-width:520px){.account-menu{right:-46px}}
     .clock-settings-card { border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--card); }
     .clock-hero { padding:20px; border-radius:16px; color:#fff; background:linear-gradient(135deg,#064e3b,#0f766e 58%,#0ea5a4); text-align:center; margin-bottom:16px; box-shadow:0 12px 28px rgba(4,120,87,.18); }
     .clock-hero .clock-hero-time { font-size:clamp(28px,6vw,42px); line-height:1.15; font-weight:900; letter-spacing:1px; font-variant-numeric:tabular-nums; }
@@ -1626,7 +1636,22 @@ function renderAdminHTML(nonce) {
       <div class="top-actions">
         <button class="icon-btn" data-action="lang" data-lang-toggle title="Language">বাং</button>
         <button class="icon-btn" data-action="theme" data-tip="theme_tip" title="Theme">🌓</button>
-        <span class="avatar" id="whoBadge">A</span>
+        <div class="account-menu-wrap" id="accountMenuWrap">
+          <button class="avatar account-menu-trigger" id="accountMenuTrigger" type="button"
+            data-action="account-menu-toggle" aria-haspopup="true" aria-expanded="false"
+            aria-controls="accountMenu" title="Account information">
+            <span id="whoBadge">A</span>
+          </button>
+          <div class="account-menu hidden" id="accountMenu" role="menu" aria-labelledby="accountMenuTrigger">
+            <div class="account-menu-heading">Account Information</div>
+            <button class="account-menu-item" type="button" role="menuitem"
+              data-action="account-security">
+              <span aria-hidden="true">🛡️</span>
+              <span>Security &amp; account</span>
+              <span class="account-menu-arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+        </div>
         <button class="icon-btn" data-action="logout" data-tip="logout" title="Logout" aria-label="Logout">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M5.6 6.6a8 8 0 1 0 12.8 0"/></svg>
         </button>
@@ -4819,6 +4844,28 @@ function renderAdminHTML(nonce) {
     document.addEventListener('pointerup', endInvoicePan);
     document.addEventListener('pointercancel', endInvoicePan);
 
+    function toggleAccountMenu(forceOpen) {
+      var menu = $('accountMenu');
+      var trigger = $('accountMenuTrigger');
+      if (!menu || !trigger) return;
+      var open = typeof forceOpen === 'boolean' ? forceOpen : menu.classList.contains('hidden');
+      menu.classList.toggle('hidden', !open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function closeAccountMenu() {
+      toggleAccountMenu(false);
+    }
+
+    document.addEventListener('click', function (e) {
+      var wrap = $('accountMenuWrap');
+      if (wrap && !wrap.contains(e.target)) closeAccountMenu();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAccountMenu();
+    });
+
     document.addEventListener('click', function (e) {
       var el = e.target.closest('[data-action]');
       if (!el) return;
@@ -4827,6 +4874,16 @@ function renderAdminHTML(nonce) {
       var id = Number(el.getAttribute('data-id'));
 
       if (a === 'login') doLogin();
+      else if (a === 'account-menu-toggle') toggleAccountMenu();
+      else if (a === 'account-security') {
+        closeAccountMenu();
+        go('settings');
+        var securitySection = document.querySelector('#v-settings .settings-security-card');
+        if (securitySection) {
+          toggleSettingsSecurity(true);
+          securitySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
       else if (a === 'toggle-pw') togglePw(el);
       else if (a === 'save-inv') saveInventory();
       else if (a === 'save-bulk') saveBulk();
