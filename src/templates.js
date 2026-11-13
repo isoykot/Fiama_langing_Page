@@ -2867,7 +2867,7 @@ function renderAdminHTML(nonce) {
           '<dt>' + esc(t('d_total')) + '</dt><dd><strong>' + money(o.total) + '</strong></dd>' +
           '<dt>' + esc(t('d_time')) + '</dt><dd>' + fmtDate(o.created_at) + '</dd>' +
         '</dl>' +
-        '<div class="order-status-row"><label class="field"><span class="lbl">' + esc(t('d_status')) + '</span><select class="input" data-action="status" data-pid="' + esc(pid) + '">' + opts + '</select></label><label class="field"><span class="lbl">' + esc(t('pay_method')) + '</span><select class="input" data-action="payment-method" data-pid="' + esc(pid) + '"><option value=""' + (!o.payment_method ? ' selected' : '') + '>' + esc(t('pay_select')) + '</option><option value="Paid"' + (o.payment_method === 'Paid' ? ' selected' : '') + '>' + esc(t('pay_paid')) + '</option><option value="COD"' + (o.payment_method === 'COD' ? ' selected' : '') + '>' + esc(t('pay_cod')) + '</option><option value="Partial"' + (o.payment_method === 'Partial' ? ' selected' : '') + '>' + esc(t('pay_partial')) + '</option></select></label></div>' +
+        '<div class="order-status-row"><label class="field"><span class="lbl">' + esc(t('d_status')) + '</span><select class="input" data-action="status" data-pid="' + esc(pid) + '">' + opts + '</select></label><label class="field"><span class="lbl">' + esc(t('pay_method')) + '</span><select class="input" data-action="payment-method" data-pid="' + esc(pid) + '"><option value=""' + (!o.payment_method ? ' selected' : '') + '>' + esc(t('pay_select')) + '</option><option value="Paid"' + (o.payment_method === 'Paid' ? ' selected' : '') + '>' + esc(t('pay_paid')) + '</option><option value="Delivery"' + (o.payment_method === 'Delivery' ? ' selected' : '') + '>' + esc(t('pay_delivery')) + '</option><option value="COD"' + (o.payment_method === 'COD' ? ' selected' : '') + '>' + esc(t('pay_cod')) + '</option><option value="Partial"' + (o.payment_method === 'Partial' ? ' selected' : '') + '>' + esc(t('pay_partial')) + '</option></select></label></div>' +
         '<label class="field order-payment-amount" ' + (o.payment_method === 'Partial' ? '' : 'hidden') + '><span class="lbl">' + esc(t('pay_received')) + '</span><input class="input" type="number" min="0" max="' + Number(o.total || 0) + '" step="1" data-action="payment-amount" data-pid="' + esc(pid) + '" value="' + Number(o.payment_received || 0) + '" placeholder="' + esc(t('pay_received_placeholder')) + '"></label>' +
         '<label class="field"><span class="lbl">' + esc(t('note_label')) + '</span><textarea class="input" id="orderNote" rows="2">' + esc(o.note || '') + '</textarea></label>' +
         '<button class="btn ghost block" data-action="save-note" data-pid="' + esc(pid) + '">' + esc(t('note_save')) + '</button>' +
@@ -2890,7 +2890,7 @@ function renderAdminHTML(nonce) {
         openOrder(pid);
         return;
       }
-      var saved = method === 'Paid' ? total : method === 'COD' || !method ? 0 : Math.round(amount);
+      var saved = method === 'Paid' ? total : method === 'Delivery' ? Math.max(0, Number((CACHE[pid] || {}).delivery_charge) || 0) : method === 'COD' || !method ? 0 : Math.round(amount);
       var r = await api('/api/admin/order/payment', 'POST', { publicId: pid, paymentMethod: method, paymentReceived: saved });
       if (!r.ok) { toast(r.data.error || 'Could not update payment details.', 'err'); openOrder(pid); return; }
       if (CACHE[pid]) { CACHE[pid].payment_method = method; CACHE[pid].payment_received = saved; }
@@ -3083,11 +3083,12 @@ function renderAdminHTML(nonce) {
       var method = o.payment_method || '';
       var received = method === 'Paid' ? Number(o.total||0) : method === 'COD' || !method ? 0 : Number(o.payment_received||0);
       var due = Math.max(0, Number(o.total||0)-received);
-      var methodLabel = method === 'Paid' ? 'Paid' : method === 'COD' ? 'Cash on Delivery (COD)' : method === 'Partial' ? 'Partial payment' : 'Not selected';
+      var methodLabel = method === 'Paid' ? 'Paid' : method === 'Delivery' ? 'Delivery Charge Paid' : method === 'COD' ? 'Cash on Delivery (COD)' : method === 'Partial' ? 'Partial payment' : 'Not selected';
       var totals = '<div><span>Subtotal</span><b>' + money(o.subtotal||0) + '</b></div>' +
+        (method === 'Partial' && received > 0 ? '<div><span>Partial Payment</span><b>−' + money(received) + '</b></div>' : '') +
         (Number(o.bulk_discount)>0 ? '<div><span>Bulk discount</span><b>−' + money(o.bulk_discount) + '</b></div>' : '') +
         (Number(o.coupon_discount)>0 ? '<div><span>Coupon discount' + (o.coupon_code ? ' ('+esc(o.coupon_code)+')' : '') + '</span><b>−' + money(o.coupon_discount) + '</b></div>' : '') +
-        '<div><span>Delivery charge</span><b>' + money(o.delivery_charge||0) + '</b></div><div class="inv-total"><span>Total</span><b>' + money(o.total||0) + '</b></div>';
+        '<div><span>Delivery charge</span><b>' + (method === 'Paid' || method === 'Delivery' ? '<strong>Paid</strong>' : money(o.delivery_charge||0)) + '</b></div><div class="inv-total"><span>Total</span><b>' + money(due) + '</b></div>';
       return '<div class="invoice-sheet"><header class="inv-top"><div class="inv-brand">' + logo + '<div><strong>' + esc(c.brand||PRODUCT.title||'Fiama Fashion') + '</strong>' + (c.tagline ? '<small>' + esc(c.tagline) + '</small>' : '') + '</div></div><div class="inv-title">Invoice</div></header>' +
         '<section class="inv-parties"><div class="inv-bill"><h3>Billed to:</h3><strong>' + esc(o.customer_name||'') + '</strong><span>' + esc(o.phone||'') + '</span><span>' + esc(o.address||'') + '</span>' + (o.delivery_area ? '<span>' + esc(o.delivery_area) + '</span>' : '') + '</div><div class="inv-number"><strong>Order ID: ' + esc(o.public_id) + '</strong><span>Date: ' + fmtInvoiceDate(o.created_at) + '</span></div></section>' +
         '<table class="inv-table"><thead><tr><th>Item</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>' + rows + '</tbody></table><section class="inv-totals">' + totals + '</section>' +
@@ -3117,10 +3118,9 @@ function renderAdminHTML(nonce) {
         (S.status ? '<span class="pd-meta-line">' + esc(t('inv_status')) + ': ' + esc(statusLabel(o.status)) + '</span>' : '') + '</div></div>';
 
       var cust = [];
-      if (S.customer) cust.push('<p><b>' + esc(o.customer_name) + '</b></p>');
       if (S.phone) cust.push('<p>' + esc(o.phone) + '</p>');
-      if (S.address) cust.push('<p>' + esc(o.address) + '</p>');
       if (S.area) cust.push('<p>' + esc(o.delivery_area) + '</p>');
+      if (S.address) cust.push('<p>' + esc(o.address) + '</p>');
       var box = cust.length ? '<div class="pd-box"><h4>' + esc(t('inv_bill_to')) + '</h4>' + cust.join('') + '</div>' : '';
 
       // প্রতিটি আইটেম: 1. নাম (লম্বা হলে পরের লাইনে) / রঙ ও সাইজ — পরিমাণ × দাম = মোট
@@ -3140,7 +3140,11 @@ function renderAdminHTML(nonce) {
       tot += '<div class="pd-grand"><span>' + esc(t('inv_grand')) + '</span><span>' + money(o.total) + '</span></div>';
       var totals = '<div class="pd-tot">' + tot + '</div>';
 
-      var pay = S.payment ? '<div class="pd-pay">💵 ' + esc(t('inv_cod')) + ' — ' + money(o.total) + '</div>' : '';
+      var method = String(o.payment_method || '');
+      var received = method === 'Paid' ? Number(o.total || 0) : Math.max(0, Number(o.payment_received) || 0);
+      var due = Math.max(0, Number(o.total || 0) - received);
+      var payLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Partial' ? 'Partial Payment - ' + money(received) : 'Cash on Delivery (COD)';
+      var pay = S.payment ? '<div class="pd-pay">💵 ' + payLabel + ' — ' + money(due) + '</div>' : '';
       var contact = c.contact || PRODUCT.contact_phone || '';
       var foot = '<div class="pd-foot">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
         (S.contact && contact ? '<br>' + esc(t('inv_contact')) + ': ' + esc(contact) : '') + '</div>';
@@ -3251,10 +3255,14 @@ function renderAdminHTML(nonce) {
           return '<div class="receipt-item"><strong>' + (S.num ? (i + 1) + '. ' : '') + esc(PRODUCT.title || '') + '</strong>' +
             '<div class="receipt-item-sub"><span>' + (variant || '') + '</span><b>' + (S.qty ? n + ' × ' + money(unit) + ' = ' : '') + money(unit * n) + '</b></div></div>';
         }).join('');
+        var method = String(o.payment_method || '');
+        var received = method === 'Paid' ? Number(o.total || 0) : Math.max(0, Number(o.payment_received) || 0);
+        var due = Math.max(0, Number(o.total || 0) - received);
         var totals = '<div class="receipt-row"><span>Subtotal</span><b>' + money(o.subtotal || 0) + '</b></div>' +
+          (method === 'Partial' && received > 0 ? '<div class="receipt-row"><span>Partial Payment</span><b>−' + money(received) + '</b></div>' : '') +
           (S.bulk && Number(o.bulk_discount) > 0 ? '<div class="receipt-row"><span>Bulk discount</span><b>−' + money(o.bulk_discount) + '</b></div>' : '') +
           (S.coupon && Number(o.coupon_discount) > 0 ? '<div class="receipt-row"><span>Coupon discount</span><b>−' + money(o.coupon_discount) + '</b></div>' : '') +
-          '<div class="receipt-row"><span>Delivery Charge</span><b>' + money(o.delivery_charge || 0) + '</b></div>';
+          '<div class="receipt-row"><span>Delivery Charge</span><b>' + (method === 'Paid' || method === 'Delivery' ? '<strong>Paid</strong>' : money(o.delivery_charge || 0)) + '</b></div>';
         return '<style>' +
           '#' + sc + '{width:' + ((c.page === '58mm') ? '58mm' : (c.page === '80mm' ? '80mm' : '80mm')) + ';max-width:100%;margin:0 auto;padding:3mm 2.5mm;background:#fff;color:#000;font-family:Arial, sans-serif;font-size:11px;line-height:1.35;box-sizing:border-box;overflow-wrap:anywhere}' +
           '#' + sc + ' *{box-sizing:border-box}#' + sc + ' .receipt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}' +
@@ -3278,21 +3286,15 @@ function renderAdminHTML(nonce) {
           (S.date ? 'Date: ' + esc(fmtDate(o.created_at)) + '<br>' : '') + (S.status ? 'Status: ' + esc(statusLabel(o.status)) : '') +
           '</div></div>' + logo + '</div><hr class="receipt-rule">' +
           ((S.customer || S.phone || S.address || S.area) ? '<div class="receipt-customer"><div class="receipt-label">BILL TO</div>' +
-          (S.customer ? '<strong>' + esc(o.customer_name || '') + '</strong><br>' : '') +
-          (S.phone ? '<span>Phone: ' + esc(o.phone || '') + '</span><br>' : '') +
-          (S.area ? '<span>Delivery: ' + esc(o.delivery_area || '') + '</span><br>' : '') +
-          (S.address ? '<span>Address: ' + esc(o.address || '') + '</span>' : '') + '</div>' : '') +
+          (S.phone ? '<span>' + esc(o.phone || '') + '</span><br>' : '') +
+          (S.area ? '<span>' + esc(o.delivery_area || '') + '</span><br>' : '') +
+          (S.address ? '<span>' + esc(o.address || '') + '</span>' : '') + '</div>' : '') +
           '<div class="receipt-items">' + items + '</div><hr class="receipt-dash"><div>' + totals + '</div>' +
-          '<div class="receipt-grand"><span>Grand Total</span><span>' + money(o.total || 0) + ' BDT</span></div>' +
+          '<div class="receipt-grand"><span>Grand Total</span><span>' + money(due) + ' BDT</span></div>' +
           (S.payment ? (function () {
             var method = String(o.payment_method || '');
-            var methodLabel = method === 'Paid' ? 'Paid' : method === 'COD' ? 'Cash on Delivery (COD)' :
-              method === 'Partial' ? 'Partial Payment' : 'Payment method not selected';
-            var received = Math.max(0, Number(o.payment_received) || 0);
-            var due = Math.max(0, Number(o.total || 0) - received);
-            return '<div class="receipt-cod"><div>Payment method: ' + methodLabel + '</div>' +
-              '<div>Received: ' + money(received) + ' BDT</div>' +
-              '<div>Due: ' + money(due) + ' BDT</div></div>';
+            var methodLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Partial' ? 'Partial Payment - ' + money(received) : 'Cash on Delivery (COD)';
+            return '<div class="receipt-cod"><div>' + methodLabel + (method === 'COD' || method === 'Delivery' || !method ? ' — ' + money(due) + ' BDT' : '') + '</div></div>';
           })() : '') +
           '<div class="receipt-footer">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
           (S.contact && contact ? '<br>Contact Us: ' + esc(contact) : '') + '</div></div>';
@@ -4835,7 +4837,7 @@ function renderAdminHTML(nonce) {
         var payPid = t2.getAttribute('data-pid');
         var payWrap = document.querySelector('.order-payment-amount');
         if (payWrap) payWrap.hidden = t2.value !== 'Partial';
-        updatePayment(payPid, t2.value, t2.value === 'Paid' ? Number((CACHE[payPid] || {}).total || 0) : 0);
+        updatePayment(payPid, t2.value, t2.value === 'Paid' ? Number((CACHE[payPid] || {}).total || 0) : t2.value === 'Delivery' ? Number((CACHE[payPid] || {}).delivery_charge || 0) : 0);
       } else if (t2.getAttribute && t2.getAttribute('data-action') === 'payment-amount') {
         updatePayment(t2.getAttribute('data-pid'), 'Partial', t2.value);
       } else if (t2.id === 'pFiles') {
