@@ -1923,7 +1923,20 @@ function renderAdminHTML(nonce) {
   <!-- ===== App ===== -->
   <div id="appView" class="hidden">
     <header class="topbar">
-      <div class="brand"><span class="dot">🛍️</span><span class="name">Admin Panel</span></div>
+      <div class="brand">
+        <div class="brand-menu-wrap" id="brandMenuWrap">
+          <button class="brand-menu-trigger dot" id="brandMenuTrigger" type="button"
+            data-action="brand-menu-toggle" aria-haspopup="true" aria-expanded="false"
+            aria-controls="brandMenu" title="Menu">🛍️</button>
+          <div class="brand-menu hidden" id="brandMenu" role="menu" aria-labelledby="brandMenuTrigger">
+            <div class="brand-menu-heading">Manu</div>
+            <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="product"><span aria-hidden="true">🛍️</span><span data-i18n="nav_product">Product</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
+            <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="offers"><span aria-hidden="true">🎟️</span><span data-i18n="nav_offers">Offers &amp; Coupons</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
+            <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="inventory"><span aria-hidden="true">📦</span><span data-i18n="nav_inventory">Inventory</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
+          </div>
+        </div>
+        <span class="name">Admin Panel</span>
+      </div>
       <div class="header-clock" id="headerClock" aria-label="Date and time"><span class="clock-time" id="headerClockTime">—</span><span class="clock-date" id="headerClockDate">—</span></div>
       <div class="top-actions">
         <button class="icon-btn" data-action="lang" data-lang-toggle title="Language">বাং</button>
@@ -1952,9 +1965,6 @@ function renderAdminHTML(nonce) {
       <div class="nav-inner">
         <button class="nav-btn" data-action="go" data-view="dashboard" data-i18n="nav_dash"></button>
         <button class="nav-btn" data-action="go" data-view="orders" data-i18n="nav_orders"></button>
-        <button class="nav-btn" data-action="go" data-view="product" data-i18n="nav_product"></button>
-        <button class="nav-btn" data-action="go" data-view="offers" data-i18n="nav_offers"></button>
-        <button class="nav-btn" data-action="go" data-view="inventory" data-i18n="nav_inventory"></button>
       </div>
     </nav>
 
@@ -3049,6 +3059,7 @@ function renderAdminHTML(nonce) {
     /* ---------- Navigation ---------- */
 
     function go(view) {
+      closeBrandMenu();
       if (view === 'logs' && $('logsModal')) { openAccountPanel('logsModal', 'logs'); loadLogs(); return; }
       if (view === 'settings' && $('settingsModal')) { openAccountPanel('settingsModal', 'settings'); loadIdGenerator(); return; }
       VIEW = view;
@@ -5191,6 +5202,16 @@ function renderAdminHTML(nonce) {
     }
     window.addEventListener('popstate', function () { closeAccountPanel(true); });
 
+    function toggleBrandMenu(forceOpen) {
+      var menu = $('brandMenu');
+      var trigger = $('brandMenuTrigger');
+      if (!menu || !trigger) return;
+      var open = typeof forceOpen === 'boolean' ? forceOpen : menu.classList.contains('hidden');
+      menu.classList.toggle('hidden', !open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function closeBrandMenu() { toggleBrandMenu(false); }
+
     function toggleAccountMenu(forceOpen) {
       var menu = $('accountMenu');
       var trigger = $('accountMenuTrigger');
@@ -5207,10 +5228,12 @@ function renderAdminHTML(nonce) {
     document.addEventListener('click', function (e) {
       var wrap = $('accountMenuWrap');
       if (wrap && !wrap.contains(e.target)) closeAccountMenu();
+      var brandWrap = $('brandMenuWrap');
+      if (brandWrap && !brandWrap.contains(e.target)) closeBrandMenu();
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { closeAccountMenu(); closeAccountPanel(false); }
+      if (e.key === 'Escape') { closeAccountMenu(); closeBrandMenu(); closeAccountPanel(false); }
     });
 
     document.addEventListener('click', function (e) {
@@ -5221,7 +5244,8 @@ function renderAdminHTML(nonce) {
       var id = Number(el.getAttribute('data-id'));
 
       if (a === 'login') doLogin();
-      else if (a === 'account-menu-toggle') toggleAccountMenu();
+      else if (a === 'brand-menu-toggle') { closeAccountMenu(); toggleBrandMenu(); }
+      else if (a === 'account-menu-toggle') { closeBrandMenu(); toggleAccountMenu(); }
       else if (a === 'account-security') {
         closeAccountMenu();
         openAccountPanel('securityAccountModal', 'dashboard');
