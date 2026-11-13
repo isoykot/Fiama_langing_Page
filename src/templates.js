@@ -3293,7 +3293,7 @@ function renderAdminHTML(nonce) {
           '<div class="receipt-grand"><span>Grand Total</span><span>' + money(due) + ' BDT</span></div>' +
           (S.payment ? (function () {
             var method = String(o.payment_method || '');
-            var methodLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Partial' ? 'Partial Payment - ' + money(received) : 'Cash on Delivery (COD)';
+            var methodLabel = method === 'Paid' ? '<strong>Paid</strong>' : method === 'Partial' ? 'Partial Payment - ' + money(received) : '🚚 Cash on Delivery (COD)';
             return '<div class="receipt-cod"><div>' + methodLabel + (method === 'COD' || method === 'Delivery' || !method ? ' — ' + money(due) + ' BDT' : '') + '</div></div>';
           })() : '') +
           '<div class="receipt-footer">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
