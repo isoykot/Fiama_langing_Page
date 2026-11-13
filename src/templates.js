@@ -1061,6 +1061,15 @@ function renderAdminHTML(nonce) {
     #v-settings > .settings-security-card #saWrap > .grid-2 {
       align-items:start;
     }
+    .security-account-modal{position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;padding:20px}
+    .security-account-modal.hidden{display:none}
+    .security-account-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.62);backdrop-filter:blur(3px)}
+    .security-account-dialog{position:relative;z-index:1;width:min(760px,100%);max-height:90vh;overflow:auto;background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+    .security-account-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+    .security-account-dialog-head h2{font-size:20px;font-weight:850;margin:0 0 5px}
+    .security-account-dialog-head p{font-size:13px;color:var(--muted);margin:0}
+    .security-account-dialog #saWrap{display:block!important;margin-top:0!important}
+    @media(max-width:600px){.security-account-modal{padding:10px;align-items:flex-end}.security-account-dialog{max-height:92dvh;border-radius:18px;padding:14px}}
     .account-menu-wrap{position:relative;display:inline-flex;align-items:center}
     .account-menu-trigger{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:0}
     .account-menu-trigger:focus-visible,.account-menu-item:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
@@ -2017,41 +2026,6 @@ function renderAdminHTML(nonce) {
       <section id="v-settings" class="view hidden">
         <div class="view-head"><div><h2 data-i18n="settings_title"></h2><p data-i18n="settings_sub"></p></div></div>
 
-        <div class="card settings-security-card">
-          <button type="button" class="acc-head" data-action="sa-toggle" aria-expanded="false" aria-controls="saWrap">
-            <span class="acc-title" data-i18n="sa_title"></span><span class="acc-arrow" id="saArrow">▸</span>
-          </button>
-          <div id="saWrap" class="hidden" style="margin-top:12px;">
-        <div class="grid-2">
-          <div class="card">
-            <h3 data-i18n="un_title"></h3>
-            <div class="field"><label for="unCur" data-i18n="cur_pw"></label><div class="pw"><input class="input" type="password" id="unCur" autocomplete="current-password"><button type="button" class="eye" data-action="toggle-pw" data-target="unCur" aria-label="show" tabindex="-1"></button></div></div>
-            <div class="field"><label for="unNew" data-i18n="un_new"></label><input class="input" id="unNew" autocapitalize="none" autocomplete="off" spellcheck="false"></div>
-            <button class="btn" data-action="un-save" data-i18n="un_save"></button>
-            <div class="msg" id="unMsg"></div>
-          </div>
-          <div class="card">
-            <h3 data-i18n="pw_section"></h3>
-            <div class="field"><label for="cpCurrent" data-i18n="cur_pw"></label><div class="pw"><input class="input" type="password" id="cpCurrent" autocomplete="current-password"><button type="button" class="eye" data-action="toggle-pw" data-target="cpCurrent" aria-label="show" tabindex="-1"></button></div></div>
-            <div class="grid-2">
-              <div class="field"><label for="cpNew" data-i18n="new_pw"></label><div class="pw"><input class="input" type="password" id="cpNew" autocomplete="new-password"><button type="button" class="eye" data-action="toggle-pw" data-target="cpNew" aria-label="show" tabindex="-1"></button></div></div>
-              <div class="field"><label for="cpConfirm" data-i18n="repeat_pw"></label><div class="pw"><input class="input" type="password" id="cpConfirm" autocomplete="new-password"><button type="button" class="eye" data-action="toggle-pw" data-target="cpConfirm" aria-label="show" tabindex="-1"></button></div></div>
-            </div>
-            <button class="btn" data-action="change-pass" data-i18n="change_pw"></button>
-            <div class="msg" id="passMsg"></div>
-          </div>
-        </div>
-
-          <div class="list-item">
-            <div><strong data-i18n="logout_this"></strong><div class="muted" data-i18n="logout_this_d"></div></div>
-            <button class="btn ghost sm" data-action="logout" data-i18n="logout"></button>
-          </div>
-          <div class="list-item">
-            <div><strong data-i18n="logout_all"></strong><div class="muted" data-i18n="logout_all_d"></div></div>
-            <button class="btn danger sm" data-action="logout-all" data-i18n="logout_all_btn"></button>
-          </div>
-          </div>
-        </div>
         <details class="card settings-accordion" id="clockSettingsAccordion">
           <summary><span>🕒 Time and Date</span></summary>
           <div class="settings-body">
@@ -2132,6 +2106,46 @@ function renderAdminHTML(nonce) {
 
 
       </section>
+        <div class="security-account-modal hidden" id="securityAccountModal" role="dialog" aria-modal="true" aria-labelledby="securityAccountTitle">
+          <div class="security-account-backdrop" data-action="security-modal-close"></div>
+          <div class="security-account-dialog">
+            <div class="security-account-dialog-head">
+              <div><h2 id="securityAccountTitle">🛡️ Security &amp; account</h2><p>Manage your login, password and active sessions</p></div>
+              <button type="button" class="icon-btn" data-action="security-modal-close" aria-label="Close">✕</button>
+            </div>
+          <div id="saWrap" style="margin-top:12px;">
+        <div class="grid-2">
+          <div class="card">
+            <h3 data-i18n="un_title"></h3>
+            <div class="field"><label for="unCur" data-i18n="cur_pw"></label><div class="pw"><input class="input" type="password" id="unCur" autocomplete="current-password"><button type="button" class="eye" data-action="toggle-pw" data-target="unCur" aria-label="show" tabindex="-1"></button></div></div>
+            <div class="field"><label for="unNew" data-i18n="un_new"></label><input class="input" id="unNew" autocapitalize="none" autocomplete="off" spellcheck="false"></div>
+            <button class="btn" data-action="un-save" data-i18n="un_save"></button>
+            <div class="msg" id="unMsg"></div>
+          </div>
+          <div class="card">
+            <h3 data-i18n="pw_section"></h3>
+            <div class="field"><label for="cpCurrent" data-i18n="cur_pw"></label><div class="pw"><input class="input" type="password" id="cpCurrent" autocomplete="current-password"><button type="button" class="eye" data-action="toggle-pw" data-target="cpCurrent" aria-label="show" tabindex="-1"></button></div></div>
+            <div class="grid-2">
+              <div class="field"><label for="cpNew" data-i18n="new_pw"></label><div class="pw"><input class="input" type="password" id="cpNew" autocomplete="new-password"><button type="button" class="eye" data-action="toggle-pw" data-target="cpNew" aria-label="show" tabindex="-1"></button></div></div>
+              <div class="field"><label for="cpConfirm" data-i18n="repeat_pw"></label><div class="pw"><input class="input" type="password" id="cpConfirm" autocomplete="new-password"><button type="button" class="eye" data-action="toggle-pw" data-target="cpConfirm" aria-label="show" tabindex="-1"></button></div></div>
+            </div>
+            <button class="btn" data-action="change-pass" data-i18n="change_pw"></button>
+            <div class="msg" id="passMsg"></div>
+          </div>
+        </div>
+
+          <div class="list-item">
+            <div><strong data-i18n="logout_this"></strong><div class="muted" data-i18n="logout_this_d"></div></div>
+            <button class="btn ghost sm" data-action="logout" data-i18n="logout"></button>
+          </div>
+          <div class="list-item">
+            <div><strong data-i18n="logout_all"></strong><div class="muted" data-i18n="logout_all_d"></div></div>
+            <button class="btn danger sm" data-action="logout-all" data-i18n="logout_all_btn"></button>
+          </div>
+          </div>
+          </div>
+        </div>
+
 
     </main>
   </div>
@@ -4863,7 +4877,7 @@ function renderAdminHTML(nonce) {
     });
 
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeAccountMenu();
+      if (e.key === 'Escape') { closeAccountMenu(); var securityModal = $('securityAccountModal'); if (securityModal) securityModal.classList.add('hidden'); }
     });
 
     document.addEventListener('click', function (e) {
@@ -4877,12 +4891,12 @@ function renderAdminHTML(nonce) {
       else if (a === 'account-menu-toggle') toggleAccountMenu();
       else if (a === 'account-security') {
         closeAccountMenu();
-        go('settings');
-        var securitySection = document.querySelector('#v-settings .settings-security-card');
-        if (securitySection) {
-          toggleSettingsSecurity(true);
-          securitySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        var securityModal = $('securityAccountModal');
+        if (securityModal) securityModal.classList.remove('hidden');
+      }
+      else if (a === 'security-modal-close') {
+        var securityModal = $('securityAccountModal');
+        if (securityModal) securityModal.classList.add('hidden');
       }
       else if (a === 'toggle-pw') togglePw(el);
       else if (a === 'save-inv') saveInventory();
