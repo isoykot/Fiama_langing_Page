@@ -1353,6 +1353,58 @@ function renderAdminHTML(nonce) {
     .print-choice-body .pr-side { min-width:0; width:100%; }
     .print-choice-body #printPrev { min-width:0; width:100%; }
 
+    /* Print settings: stacked selectors, side-by-side editor and live preview. */
+    .print-choice-grid { grid-template-columns:minmax(0,1fr) !important; }
+    .print-choice-grid.has-open-choice {
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+      grid-template-rows:auto minmax(0,1fr);
+      align-items:start;
+    }
+    .print-choice-grid.has-open-choice .print-choice:not([open]) {
+      grid-column:1 / -1 !important;
+      grid-row:1 !important;
+      width:100%;
+    }
+    .print-choice-grid.has-open-choice .print-choice[open] {
+      grid-column:1 !important;
+      grid-row:2 !important;
+      width:100%;
+    }
+    .print-choice-grid.has-open-choice .print-shared-preview {
+      grid-column:2 !important;
+      grid-row:2 !important;
+      align-self:stretch;
+      position:sticky !important;
+      top:16px !important;
+      max-height:none !important;
+    }
+    .print-choice-grid.has-open-choice.pos-active .print-choice[open] {
+      grid-column:2 !important;
+      grid-row:2 !important;
+    }
+    .print-choice-grid.has-open-choice.pos-active .print-shared-preview {
+      grid-column:1 !important;
+      grid-row:2 !important;
+    }
+    .print-choice-grid.has-open-choice .print-choice-body { overflow:visible; }
+    .print-choice-grid.has-open-choice .print-choice-body .pr-grid { display:block; }
+    .print-choice-grid.has-open-choice .print-shared-preview .pr-side { width:100%; }
+    @media (max-width:760px) {
+      .print-choice-grid.has-open-choice {
+        grid-template-columns:minmax(0,1fr) !important;
+        grid-template-rows:auto;
+      }
+      .print-choice-grid.has-open-choice .print-choice:not([open]),
+      .print-choice-grid.has-open-choice .print-choice[open],
+      .print-choice-grid.has-open-choice .print-shared-preview,
+      .print-choice-grid.has-open-choice.pos-active .print-choice[open],
+      .print-choice-grid.has-open-choice.pos-active .print-shared-preview {
+        grid-column:1 !important;
+        grid-row:auto !important;
+      }
+      .print-choice-grid.has-open-choice .print-shared-preview { position:relative !important; top:auto !important; }
+    }
+
     @media (min-width:900px) { .pr-grid { grid-template-columns:minmax(0,1.08fr) minmax(300px,.92fr); align-items:start; } }
     .pr-form { min-width:0; display:flex; flex-direction:column; gap:12px; }
     .pr-side { position:relative !important; top:auto !important; align-self:start; max-height:none !important; overflow:visible !important; background:var(--chip); border:1px solid var(--line); border-radius:18px; padding:14px; box-shadow:var(--shadow); }
