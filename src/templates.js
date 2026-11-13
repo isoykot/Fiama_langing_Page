@@ -1378,12 +1378,13 @@ function renderAdminHTML(nonce) {
       top:16px !important;
       max-height:none !important;
     }
+    /* POS: keep the settings panel on the left and live preview on the right. */
     .print-choice-grid.has-open-choice.pos-active .print-choice[open] {
-      grid-column:2 !important;
+      grid-column:1 !important;
       grid-row:2 !important;
     }
     .print-choice-grid.has-open-choice.pos-active .print-shared-preview {
-      grid-column:1 !important;
+      grid-column:2 !important;
       grid-row:2 !important;
     }
     .print-choice-grid.has-open-choice .print-choice-body { overflow:visible; }
@@ -1486,13 +1487,13 @@ function renderAdminHTML(nonce) {
       #appView .nav-btn { padding:8px 9px; font-size:12px; }
       #appView .view-head h2 { font-size:18px; }
     }
-    /* POS layout: live preview on the left, POS settings on the right. */
+    /* POS layout: settings on the left, live preview on the right. */
     .print-choice-grid.has-open-choice.pos-active .print-choice[open] {
-      grid-column:2 !important;
+      grid-column:1 !important;
       grid-row:2 !important;
     }
     .print-choice-grid.has-open-choice.pos-active .print-shared-preview {
-      grid-column:1 !important;
+      grid-column:2 !important;
       grid-row:2 !important;
     }
     @media (max-width:760px) {
