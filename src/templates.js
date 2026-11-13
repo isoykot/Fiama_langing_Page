@@ -3278,11 +3278,22 @@ function renderAdminHTML(nonce) {
           (S.date ? 'Date: ' + esc(fmtDate(o.created_at)) + '<br>' : '') + (S.status ? 'Status: ' + esc(statusLabel(o.status)) : '') +
           '</div></div>' + logo + '</div><hr class="receipt-rule">' +
           ((S.customer || S.phone || S.address || S.area) ? '<div class="receipt-customer"><div class="receipt-label">BILL TO</div>' +
-          (S.customer ? '<strong>' + esc(o.customer_name || '') + '</strong><br>' : '') + (S.phone ? esc(o.phone || '') + '<br>' : '') +
-          (S.address ? esc(o.address || '') + '<br>' : '') + (S.area ? esc(o.delivery_area || '') : '') + '</div>' : '') +
+          (S.customer ? '<strong>' + esc(o.customer_name || '') + '</strong><br>' : '') +
+          (S.phone ? '<span>Phone: ' + esc(o.phone || '') + '</span><br>' : '') +
+          (S.area ? '<span>Delivery: ' + esc(o.delivery_area || '') + '</span><br>' : '') +
+          (S.address ? '<span>Address: ' + esc(o.address || '') + '</span>' : '') + '</div>' : '') +
           '<div class="receipt-items">' + items + '</div><hr class="receipt-dash"><div>' + totals + '</div>' +
           '<div class="receipt-grand"><span>Grand Total</span><span>' + money(o.total || 0) + ' BDT</span></div>' +
-          (S.payment ? '<div class="receipt-cod">Cash on Delivery (COD) — ' + money(o.total || 0) + '</div>' : '') +
+          (S.payment ? (function () {
+            var method = String(o.payment_method || '');
+            var methodLabel = method === 'Paid' ? 'Paid' : method === 'COD' ? 'Cash on Delivery (COD)' :
+              method === 'Partial' ? 'Partial Payment' : 'Payment method not selected';
+            var received = Math.max(0, Number(o.payment_received) || 0);
+            var due = Math.max(0, Number(o.total || 0) - received);
+            return '<div class="receipt-cod"><div>Payment method: ' + methodLabel + '</div>' +
+              '<div>Received: ' + money(received) + ' BDT</div>' +
+              '<div>Due: ' + money(due) + ' BDT</div></div>';
+          })() : '') +
           '<div class="receipt-footer">' + esc(LANG === 'bn' ? c.footer_bn : c.footer_en) +
           (S.contact && contact ? '<br>Contact Us: ' + esc(contact) : '') + '</div></div>';
       }
