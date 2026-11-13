@@ -3262,7 +3262,7 @@ function renderAdminHTML(nonce) {
           (method === 'Partial' && received > 0 ? '<div class="receipt-row"><span>Partial Payment</span><b>−' + money(received) + '</b></div>' : '') +
           (S.bulk && Number(o.bulk_discount) > 0 ? '<div class="receipt-row"><span>Bulk discount</span><b>−' + money(o.bulk_discount) + '</b></div>' : '') +
           (S.coupon && Number(o.coupon_discount) > 0 ? '<div class="receipt-row"><span>Coupon discount</span><b>−' + money(o.coupon_discount) + '</b></div>' : '') +
-          '<div class="receipt-row"><span>Delivery Charge</span><b>' + (method === 'Paid' || method === 'Delivery' ? '<strong>Paid</strong>' : money(o.delivery_charge || 0)) + '</b></div>';
+          '<div class="receipt-row"><span>Delivery Charge</span><b>' + money(o.delivery_charge || 0) + '</b></div>';
         return '<style>' +
           '#' + sc + '{width:' + ((c.page === '58mm') ? '58mm' : (c.page === '80mm' ? '80mm' : '80mm')) + ';max-width:100%;margin:0 auto;padding:3mm 2.5mm;background:#fff;color:#000;font-family:Arial, sans-serif;font-size:11px;line-height:1.35;box-sizing:border-box;overflow-wrap:anywhere}' +
           '#' + sc + ' *{box-sizing:border-box}#' + sc + ' .receipt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}' +
@@ -3285,11 +3285,11 @@ function renderAdminHTML(nonce) {
           '<div class="receipt-meta">' + (S.num ? '<b>Order ID: ' + esc(o.public_id) + '</b><br>' : '') +
           (S.date ? 'Date: ' + esc(fmtDate(o.created_at)) + '<br>' : '') + (S.status ? 'Status: ' + esc(statusLabel(o.status)) : '') +
           '</div></div>' + logo + '</div><hr class="receipt-rule">' +
-          ((S.customer || S.phone || S.address || S.area) ? '<div class="receipt-customer"><div class="receipt-label">BILL TO</div>' +
-          (S.customer ? '<strong>' + esc(o.customer_name || '') + '</strong><br>' : '') +
-          (S.phone ? '<span>' + esc(o.phone || '') + '</span><br>' : '') +
-          (S.area ? '<span>' + esc(o.delivery_area || '') + '</span><br>' : '') +
-          (S.address ? '<span>' + esc(o.address || '') + '</span>' : '') + '</div>' : '') +
+          '<div class="receipt-customer"><div class="receipt-label">BILL TO</div>' +
+          '<strong>' + esc(o.customer_name || '') + '</strong><br>' +
+          '<span>' + esc(o.phone || '') + '</span><br>' +
+          '<span>' + esc(o.delivery_area || '') + '</span><br>' +
+          '<span>' + esc(o.address || '') + '</span></div>' +
           '<div class="receipt-items">' + items + '</div><hr class="receipt-dash"><div>' + totals + '</div>' +
           '<div class="receipt-grand"><span>Grand Total</span><span>' + money(due) + ' BDT</span></div>' +
           (S.payment ? (function () {
