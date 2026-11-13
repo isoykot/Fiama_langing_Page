@@ -3286,6 +3286,7 @@ function renderAdminHTML(nonce) {
           (S.date ? 'Date: ' + esc(fmtDate(o.created_at)) + '<br>' : '') + (S.status ? 'Status: ' + esc(statusLabel(o.status)) : '') +
           '</div></div>' + logo + '</div><hr class="receipt-rule">' +
           ((S.customer || S.phone || S.address || S.area) ? '<div class="receipt-customer"><div class="receipt-label">BILL TO</div>' +
+          (S.customer ? '<strong>' + esc(o.customer_name || '') + '</strong><br>' : '') +
           (S.phone ? '<span>' + esc(o.phone || '') + '</span><br>' : '') +
           (S.area ? '<span>' + esc(o.delivery_area || '') + '</span><br>' : '') +
           (S.address ? '<span>' + esc(o.address || '') + '</span>' : '') + '</div>' : '') +
