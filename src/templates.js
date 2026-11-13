@@ -4434,18 +4434,33 @@ function renderAdminHTML(nonce) {
         : '<div class="empty">' + esc(t('no_logs')) + '</div>');
     }
 
-    // Settings > Security & account: expand the parent card with its content.
-    function toggleSettingsSecurity() {
+    // Settings > Security & Account: keep visibility, layout and accessibility state synchronized.
+    function toggleSettingsSecurity(forceOpen) {
       var w = $('saWrap');
       var card = w && w.closest('.settings-security-card');
       var trigger = document.querySelector('[data-action="sa-toggle"]');
       var arrow = $('saArrow');
       if (!w || !card) return;
-      var open = w.classList.contains('hidden');
+
+      var currentlyOpen = !w.classList.contains('hidden') && !w.hidden;
+      var open = typeof forceOpen === 'boolean' ? forceOpen : !currentlyOpen;
+
+      w.hidden = !open;
       w.classList.toggle('hidden', !open);
+      w.setAttribute('aria-hidden', open ? 'false' : 'true');
       card.classList.toggle('is-open', open);
+      if (open) {
+        card.style.height = 'auto';
+        card.style.minHeight = '64px';
+      } else {
+        card.style.removeProperty('height');
+        card.style.removeProperty('min-height');
+      }
       if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (arrow) arrow.textContent = open ? '▾' : '▸';
+      if (arrow) {
+        arrow.textContent = open ? '▾' : '▸';
+        arrow.setAttribute('aria-hidden', 'true');
+      }
     }
 
     async function loadSecurity() {
