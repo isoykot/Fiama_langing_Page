@@ -65,6 +65,25 @@ import {
 } from "./core.js";
 import { renderAdminHTML, renderInactiveHTML, renderLandingHTML } from "./templates.js";
 
+function catalogSlug(value) {
+  const slug = String(value || "").toLowerCase().normalize("NFKD")
+    .replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "").slice(0, 56);
+  return slug || "product";
+}
+
+async function catalogProduct(db, id) {
+  const row = await db.prepare("SELECT id, slug, title, data FROM product_catalog WHERE id = ?").bind(id).first();
+  if (!row) return null;
+  try { return { ...JSON.parse(row.data), id: row.id, slug: row.slug, title: row.title }; }
+  catch (e) { return null; }
+}
+
+async function productInventory(db, productId) {
+  const { results } = await db.prepare("SELECT color, size, qty FROM product_inventory WHERE product_id = ? ORDER BY color, size").bind(productId).all();
+  return results || [];
+}
+
 async function route(request, env, nonce) {
   const path = new URL(request.url).pathname;
 
@@ -89,6 +108,21 @@ async function route(request, env, nonce) {
 
   if (path.startsWith("/api/")) {
     return handleApi(request, env, path);
+  }
+
+  const productPath = path.match(/^\\/p\\/([a-z0-9-]+)\\/?$/i);
+  if (productPath) {
+    const found = await env.DB.prepare("SELECT id, slug, title, data FROM product_catalog WHERE slug = ?").bind(productPath[1]).first();
+    if (!found) return new Response("প্রোডাক্টটি পাওয়া যায়নি", { status: 404 });
+    let row = null;
+    try { row = { ...JSON.parse(found.data), id: found.id, title: found.title }; } catch (e) {}
+    if (!row || Number(row.is_active) === 0) {
+      return new Response(renderInactiveHTML(), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+    }
+    const [inv, notes] = await Promise.all([productInventory(env.DB, found.id), getNotes(env.DB)]);
+    return new Response(renderLandingHTML(productView(row), inv, nonce, notes, found.id), {
+      headers: { "Content-Type": "text/html;charset=UTF-8" }
+    });
   }
 
   if (path !== "/" && path !== "/index.html") {
@@ -334,6 +368,99 @@ async function apiRoutes(request, env, path) {
     return json({ logs });
   }
 
+  /* ---------- Admin: multi-product catalog ---------- */
+
+  if (path === "/api/admin/products" && m === "GET") {
+    await authorize(request, env);
+    const legacy = await getProductRow(env.DB);
+    const { results } = await env.DB.prepare("SELECT id, slug, title, data FROM product_catalog ORDER BY id DESC").all();
+    const products = [];
+    if (legacy) products.push({ id: 1, slug: "", title: legacy.title || "Main product", active: Number(legacy.is_active) !== 0, url: "/" });
+    for (const r of results || []) {
+      let data = {};
+      try { data = JSON.parse(r.data); } catch (e) {}
+      products.push({ id: r.id, slug: r.slug, title: r.title, active: Number(data.is_active) !== 0, url: "/p/" + r.slug });
+    }
+    return json({ products });
+  }
+
+  if (path === "/api/admin/products" && m === "POST") {
+    const s = await authorize(request, env);
+    const b = await readJson(request);
+    const title = String(b.title || "").trim().slice(0, 200);
+    if (title.length < 2) throw new HttpError(400, "প্রোডাক্টের নাম কমপক্ষে ২ অক্ষর হতে হবে!");
+    const base = catalogSlug(b.slug || title);
+    let slug = base, suffix = 2;
+    while (await env.DB.prepare("SELECT id FROM product_catalog WHERE slug = ?").bind(slug).first()) {
+      slug = base + "-" + suffix++;
+    }
+    const legacy = await env.DB.prepare("SELECT * FROM product WHERE id = 1").first();
+    if (!legacy) throw new HttpError(500, "মূল প্রোডাক্টের তথ্য পাওয়া যায়নি!");
+    const data = { ...legacy, id: null, title, stock: 0, is_active: 0,
+      images: "[]", image: "", colors: "", sizes: "", description: "" };
+    const result = await env.DB.prepare(
+      "INSERT INTO product_catalog (slug, title, data) VALUES (?, ?, ?)"
+    ).bind(slug, title, JSON.stringify(data)).run();
+    const id = result.meta && result.meta.last_row_id;
+    return json({ success: true, id, slug, url: "/p/" + slug });
+  }
+
+  const catalogDetail = path.match(/^\\/api\\/admin\\/products\\/(\\d+)$/);
+  if (catalogDetail && m === "GET") {
+    await authorize(request, env);
+    const id = Number(catalogDetail[1]);
+    const row = await catalogProduct(env.DB, id);
+    if (!row) throw new HttpError(404, "প্রোডাক্ট পাওয়া যায়নি!");
+    const inv = await productInventory(env.DB, id);
+    return json({ product: productView(row), slug: row.slug, inventory: inv });
+  }
+
+  if (path === "/api/admin/product-inventory" && m === "GET") {
+    await authorize(request, env);
+    const url = new URL(request.url);
+    const id = toInt(url.searchParams.get("product_id"), NaN);
+    if (!Number.isFinite(id) || id < 2) throw new HttpError(400, "Product ID সঠিক নয়!");
+    return json({ rows: await productInventory(env.DB, id) });
+  }
+
+  if (path === "/api/admin/product-inventory" && m === "POST") {
+    const s = await authorize(request, env);
+    const b = await readJson(request);
+    const id = toInt(b.product_id, NaN);
+    const row = await catalogProduct(env.DB, id);
+    if (!row) throw new HttpError(404, "প্রোডাক্ট পাওয়া যায়নি!");
+    const colors = splitList(row.colors);
+    const sizes = splitList(row.sizes);
+    const cs = colors.length ? colors : [""];
+    const ss = sizes.length ? sizes : [""];
+    const items = Array.isArray(b.items) ? b.items : [];
+    const supplied = new Map();
+    for (const item of items) {
+      const color = String(item.color ?? "");
+      const size = String(item.size ?? "");
+      const qty = toInt(item.qty, NaN);
+      if (!cs.includes(color) || !ss.includes(size) || !Number.isInteger(qty) || qty < 0 || qty > 100000) {
+        throw new HttpError(400, "স্টকের তথ্য সঠিক নয়!");
+      }
+      supplied.set(color + "|" + size, { color, size, qty });
+    }
+    const stmts = [];
+    for (const color of cs) for (const size of ss) {
+      const item = supplied.get(color + "|" + size);
+      stmts.push(env.DB.prepare(
+        "INSERT INTO product_inventory (product_id, color, size, qty) VALUES (?, ?, ?, ?) ON CONFLICT(product_id, color, size) DO UPDATE SET qty = excluded.qty"
+      ).bind(id, color, size, item ? item.qty : 0));
+    }
+    await env.DB.batch(stmts);
+    const total = [...supplied.values()].reduce((sum, item) => sum + item.qty, 0);
+    row.stock = total;
+    const stored = await env.DB.prepare("SELECT slug FROM product_catalog WHERE id = ?").bind(id).first();
+    await env.DB.prepare("UPDATE product_catalog SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(JSON.stringify(row), id).run();
+    await audit(env, s.username, "product_stock_update", row.title, rawIp);
+    return json({ success: true, total });
+  }
+
   /* ---------- Admin: product ---------- */
 
   if (path === "/api/admin/product" && m === "POST") {
@@ -391,6 +518,43 @@ async function apiRoutes(request, env, path) {
     if (phone && !/^\+?[0-9]{7,15}$/.test(phone)) throw new HttpError(400, "কল নাম্বার সঠিক নয়!");
     if (wa && !/^[0-9]{10,15}$/.test(wa)) throw new HttpError(400, "WhatsApp নাম্বার সঠিক নয়!");
 
+    const productId = toInt(b.product_id, 1);
+    if (productId > 1) {
+      const current = await catalogProduct(env.DB, productId);
+      if (!current) throw new HttpError(404, "প্রোডাক্ট পাওয়া যায়নি!");
+      const next = {
+        ...current, title, description, price, old_price: oldPrice,
+        image: images[0], images: imagesJson, colors, sizes,
+        delivery_inside: deliveryInside, delivery_outside: deliveryOutside,
+        contact_phone: phone, whatsapp_number: wa, image_ratio: ratio, badge_pos: badgePos,
+        trust_items: trustJson, faqs: faqJson, notices: noticesJson,
+        topbar_bn: tbBn, topbar_en: tbEn, topbar_size: tbSize, topbar_align: tbAlign,
+        topbar_offset: tbOffset, topbar_pad: tbPad, topbar_lang_show: tbLangShow,
+        topbar_lang_size: tbLangSize, site_language: siteLanguage, is_active: isActive
+      };
+      const slugRow = await env.DB.prepare("SELECT slug FROM product_catalog WHERE id = ?").bind(productId).first();
+      await env.DB.prepare("UPDATE product_catalog SET title = ?, data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+        .bind(title, JSON.stringify(next), productId).run();
+      const cs = splitList(colors).length ? splitList(colors) : [""];
+      const ss = splitList(sizes).length ? splitList(sizes) : [""];
+      const keep = new Set();
+      const stmts = [];
+      for (const color of cs) for (const size of ss) {
+        keep.add(color + "|" + size);
+        stmts.push(env.DB.prepare(
+          "INSERT OR IGNORE INTO product_inventory (product_id, color, size, qty) VALUES (?, ?, ?, 0)"
+        ).bind(productId, color, size));
+      }
+      const oldInv = await productInventory(env.DB, productId);
+      for (const item of oldInv) if (!keep.has(item.color + "|" + item.size)) {
+        stmts.push(env.DB.prepare("DELETE FROM product_inventory WHERE product_id = ? AND color = ? AND size = ?")
+          .bind(productId, item.color, item.size));
+      }
+      if (stmts.length) await env.DB.batch(stmts);
+      await audit(env, s.username, "product_update", title + " (" + (slugRow ? slugRow.slug : productId) + ")", rawIp);
+      return json({ success: true, product_id: productId });
+    }
+
     await env.DB.prepare(
       `UPDATE product SET title = ?, description = ?, price = ?, old_price = ?,
         image = ?, images = ?, colors = ?, sizes = ?, delivery_inside = ?, delivery_outside = ?,
@@ -409,16 +573,22 @@ async function apiRoutes(request, env, path) {
 
     await syncInventory(env.DB, splitList(colors), splitList(sizes));
     await audit(env, s.username, "product_update", title, rawIp);
-    return json({ success: true });
+    return json({ success: true, product_id: 1 });
   }
 
   /* ---------- Public: quote & order ---------- */
 
   if (path === "/api/quote" && m === "POST") {
     const b = await readJson(request);
-    const p = await env.DB.prepare(
-      "SELECT price, delivery_inside, delivery_outside, bulk_enabled, bulk_min_qty, bulk_type, bulk_value FROM product WHERE id = 1"
-    ).first();
+    const productId = Math.max(1, toInt(b.product_id, 1));
+    let p;
+    if (productId === 1) {
+      p = await env.DB.prepare("SELECT price, delivery_inside, delivery_outside, bulk_enabled, bulk_min_qty, bulk_type, bulk_value FROM product WHERE id = 1").first();
+    } else {
+      const row = await catalogProduct(env.DB, productId);
+      p = row ? { price: row.price, delivery_inside: row.delivery_inside, delivery_outside: row.delivery_outside,
+        bulk_enabled: row.bulk_enabled, bulk_min_qty: row.bulk_min_qty, bulk_type: row.bulk_type, bulk_value: row.bulk_value } : null;
+    }
     if (!p) throw new HttpError(404, "প্রোডাক্ট পাওয়া যায়নি!");
     const qty = Math.min(MAX_QTY, Math.max(1, toInt(b.quantity, 1)));
     const area = b.area === "inside" || b.area === "outside" ? b.area : "";
@@ -449,9 +619,15 @@ async function apiRoutes(request, env, path) {
       throw new HttpError(429, "এই নাম্বার থেকে অনেক অর্ডার হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।");
     }
 
-    const product = await env.DB.prepare(
-      "SELECT price, stock, colors, sizes, delivery_inside, delivery_outside, is_active, bulk_enabled, bulk_min_qty, bulk_type, bulk_value FROM product WHERE id = 1"
-    ).first();
+    const productId = Math.max(1, toInt(b.product_id, 1));
+    let product;
+    let productTitle = "";
+    if (productId === 1) {
+      product = await env.DB.prepare("SELECT price, stock, colors, sizes, delivery_inside, delivery_outside, is_active, bulk_enabled, bulk_min_qty, bulk_type, bulk_value, title FROM product WHERE id = 1").first();
+    } else {
+      product = await catalogProduct(env.DB, productId);
+    }
+    productTitle = product ? String(product.title || "") : "";
     if (!product) throw new HttpError(404, "প্রোডাক্ট পাওয়া যায়নি!");
     if (Number(product.is_active) === 0) throw new HttpError(400, "এই মুহূর্তে প্রোডাক্টটি অর্ডারের জন্য বন্ধ আছে।");
 
@@ -481,15 +657,25 @@ async function apiRoutes(request, env, path) {
     // প্রতিটি লাইনের স্টক আলাদাভাবে ধরা; কোথাও ব্যর্থ হলে আগেরগুলো ফেরত
     const taken = [];
     const restoreTaken = async () => {
-      for (const l of taken) await addStockStmt(env.DB, l.color, l.size, l.qty).run();
+      for (const l of taken) {
+        if (productId === 1) await addStockStmt(env.DB, l.color, l.size, l.qty).run();
+        else await env.DB.prepare("UPDATE product_inventory SET qty = qty + ? WHERE product_id = ? AND color = ? AND size = ?")
+          .bind(l.qty, productId, l.color, l.size).run();
+      }
     };
     for (const l of lines) {
-      const row = await env.DB.prepare("SELECT qty FROM inventory WHERE color = ? AND size = ?").bind(l.color, l.size).first();
+      const row = productId === 1
+        ? await env.DB.prepare("SELECT qty FROM inventory WHERE color = ? AND size = ?").bind(l.color, l.size).first()
+        : await env.DB.prepare("SELECT qty FROM product_inventory WHERE product_id = ? AND color = ? AND size = ?").bind(productId, l.color, l.size).first();
       if (!row) {
         await restoreTaken();
         throw new HttpError(400, "🙏 দুঃখিত, এই অপশনটি এখন পাওয়া যাচ্ছে না। অন্য অপশন বেছে নিন।");
       }
-      if (!(await takeStock(env.DB, l.color, l.size, l.qty))) {
+      const stockTaken = productId === 1
+        ? await takeStock(env.DB, l.color, l.size, l.qty)
+        : (await env.DB.prepare("UPDATE product_inventory SET qty = qty - ? WHERE product_id = ? AND color = ? AND size = ? AND qty >= ?")
+          .bind(l.qty, productId, l.color, l.size, l.qty).run()).meta?.changes > 0;
+      if (!stockTaken) {
         await restoreTaken();
         throw new HttpError(400, stockOutMessage(colorList.length > 0, sizeList.length > 0, l.qty, Number(row.qty) || 0, l.color, l.size));
       }
@@ -532,12 +718,12 @@ async function apiRoutes(request, env, path) {
           await env.DB.prepare(
             `INSERT INTO orders (public_id, customer_name, phone, address, selected_color, selected_size,
               delivery_area, delivery_charge, quantity, total, status, phone_hash, name_hash, enc_v,
-              subtotal, bulk_discount, coupon_discount, coupon_code, lines_json)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, '1', ?, ?, ?, ?, ?)`
+              subtotal, bulk_discount, coupon_discount, coupon_code, lines_json, product_id, product_title)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', ?, ?, '1', ?, ?, ?, ?, ?, ?, ?)`
           ).bind(
             candidate, encName, encPhone, encAddr, selColor, selSize,
             deliveryAreaText, quote.delivery, qty, quote.total, phoneIdx, nameIdx,
-            quote.subtotal, quote.bulk, couponAmount, couponCode, linesJson
+            quote.subtotal, quote.bulk, couponAmount, couponCode, linesJson, productId, productTitle
           ).run();
           publicId = candidate;
         } catch (err) {
@@ -552,8 +738,8 @@ async function apiRoutes(request, env, path) {
       throw new HttpError(500, "অর্ডার সেভ করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।");
     }
 
-    await syncTotal(env.DB);
-    await audit(env, "customer", "order_create", publicId, rawIp);
+    if (productId === 1) await syncTotal(env.DB);
+    await audit(env, "customer", "order_create", publicId + " / " + productTitle, rawIp);
 
     let reward = null;
     try {
@@ -584,7 +770,7 @@ async function apiRoutes(request, env, path) {
     if (!STATUSES.includes(status)) throw new HttpError(400, "Invalid status");
 
     const order = await env.DB.prepare(
-      "SELECT id, status, quantity FROM orders WHERE public_id = ?"
+      "SELECT id, status, quantity, product_id FROM orders WHERE public_id = ?"
     ).bind(pid).first();
     if (!order) throw new HttpError(404, "অর্ডার পাওয়া যায়নি!");
 
@@ -593,7 +779,21 @@ async function apiRoutes(request, env, path) {
     const setStatus = env.DB.prepare("UPDATE orders SET status = ? WHERE id = ?").bind(status, order.id);
     const lines = await getOrderLines(env, order.id, order.quantity);
 
-    if (!wasCancelled && nowCancelled) {
+    if (Number(order.product_id || 1) > 1) {
+      const productId = Number(order.product_id);
+      if (!wasCancelled && nowCancelled) {
+        const stmts = lines.map((l) => env.DB.prepare("UPDATE product_inventory SET qty = qty + ? WHERE product_id = ? AND color = ? AND size = ?").bind(l.qty, productId, l.color, l.size));
+        stmts.push(setStatus);
+        await env.DB.batch(stmts);
+      } else if (wasCancelled && !nowCancelled) {
+        for (const l of lines) {
+          const taken = await env.DB.prepare("UPDATE product_inventory SET qty = qty - ? WHERE product_id = ? AND color = ? AND size = ? AND qty >= ?")
+            .bind(l.qty, productId, l.color, l.size, l.qty).run();
+          if (!taken.meta || taken.meta.changes === 0) throw new HttpError(400, "স্টক না থাকায় অর্ডার আবার চালু করা যাবে না!");
+        }
+        await setStatus.run();
+      } else await setStatus.run();
+    } else if (!wasCancelled && nowCancelled) {
       const stmts = lines.map((l) => addStockStmt(env.DB, l.color, l.size, l.qty));
       stmts.push(setStatus, syncTotalStmt(env.DB));
       await env.DB.batch(stmts);
@@ -605,9 +805,7 @@ async function apiRoutes(request, env, path) {
         throw new HttpError(400, "স্টক না থাকায় অর্ডার আবার চালু করা যাবে না!");
       }
       await env.DB.batch([setStatus, syncTotalStmt(env.DB)]);
-    } else {
-      await setStatus.run();
-    }
+    } else await setStatus.run();
 
     await audit(env, s.username, "order_status", pid + " → " + status, rawIp);
     return json({ success: true });
@@ -627,10 +825,15 @@ async function apiRoutes(request, env, path) {
     const lines = await getOrderLines(env, order.id, order.quantity);
     const stmts = [];
     if (order.status !== "Cancelled") {
-      for (const l of lines) stmts.push(addStockStmt(env.DB, l.color, l.size, l.qty));
+      for (const l of lines) {
+        if (Number(order.product_id || 1) > 1) {
+          stmts.push(env.DB.prepare("UPDATE product_inventory SET qty = qty + ? WHERE product_id = ? AND color = ? AND size = ?")
+            .bind(l.qty, Number(order.product_id), l.color, l.size));
+        } else stmts.push(addStockStmt(env.DB, l.color, l.size, l.qty));
+      }
     }
     stmts.push(env.DB.prepare("DELETE FROM orders WHERE id = ?").bind(order.id));
-    stmts.push(syncTotalStmt(env.DB));
+    if (Number(order.product_id || 1) === 1) stmts.push(syncTotalStmt(env.DB));
     await env.DB.batch(stmts);
 
     await audit(env, s.username, "order_delete", pid, rawIp);
