@@ -825,7 +825,7 @@ async function apiRoutes(request, env, path) {
     if (!PUBLIC_ID_RE.test(pid)) throw new HttpError(400, "অর্ডার আইডি সঠিক নয়!");
 
     const order = await env.DB.prepare(
-      "SELECT id, status, quantity FROM orders WHERE public_id = ?"
+      "SELECT id, status, quantity, product_id FROM orders WHERE public_id = ?"
     ).bind(pid).first();
     if (!order) return json({ success: true });
 
