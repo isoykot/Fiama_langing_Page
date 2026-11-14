@@ -2644,7 +2644,7 @@ function renderAdminHTML(nonce) {
     var ME = null;
     var MUST_CHANGE = false;
     var PRODUCT = {};
-    var PRODUCT_ID = 1;
+    var PRODUCT_ID = Number(store.get('admin_product_id')) || 1;
     var PRODUCT_SLUG = "";
     var PRODUCTS = [];
     var PRODUCT_STOCK_ROWS = [];
@@ -4002,6 +4002,7 @@ function renderAdminHTML(nonce) {
       var r = await api('/api/admin/products', 'POST', { title: title.trim() });
       if (!r.ok) { toast(r.data.error || 'Product create failed', 'err'); return; }
       PRODUCT_ID = Number(r.data.id);
+      store.set('admin_product_id', PRODUCT_ID);
       toast('নতুন Product তৈরি হয়েছে। এখন তথ্য ও ছবি দিয়ে Save করুন।', 'ok');
       await loadProduct();
     }
@@ -5561,7 +5562,7 @@ function renderAdminHTML(nonce) {
       else if (a === 'notice-del') { NOTICES.splice(Number(el.getAttribute('data-idx')), 1); renderNotices(); }
       else if (a === 'notice-img-del') { NOTICES[Number(el.getAttribute('data-idx'))].image = ''; renderNotices(); }
       else if (a === 'product-create') createProduct();
-      else if (a === 'product-select') { PRODUCT_ID = Number(el.getAttribute('data-product-id')) || 1; loadProduct(); }
+      else if (a === 'product-select') { PRODUCT_ID = Number(el.getAttribute('data-product-id')) || 1; store.set('admin_product_id', PRODUCT_ID); loadProduct(); }
       else if (a === 'product-copy-link') copyText(el.getAttribute('data-link'));
       else if (a === 'product-stock-save') saveProductStock();
       else if (a === 'save-product') saveProduct();
