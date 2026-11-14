@@ -78,8 +78,13 @@ async function catalogProduct(db, id) {
   if (!row) return null;
   try {
     const data = { ...JSON.parse(row.data), id: row.id, slug: row.slug, title: row.title };
-    const stock = await db.prepare("SELECT COALESCE(SUM(qty), 0) AS total FROM product_inventory WHERE product_id = ?").bind(id).first();
-    data.stock = Number(stock && stock.total) || 0;
+    const colors = splitList(data.colors);
+    const sizes = splitList(data.sizes);
+    const allowedColors = colors.length ? colors : [""];
+    const allowedSizes = sizes.length ? sizes : [""];
+    const stockRows = await db.prepare("SELECT color, size, qty FROM product_inventory WHERE product_id = ?").bind(id).all();
+    data.stock = (stockRows.results || []).reduce((total, item) =>
+      total + (allowedColors.includes(item.color) && allowedSizes.includes(item.size) ? Number(item.qty) || 0 : 0), 0);
     return data;
   } catch (e) { return null; }
 }
@@ -459,7 +464,6 @@ async function apiRoutes(request, env, path) {
     await env.DB.batch(stmts);
     const total = [...supplied.values()].reduce((sum, item) => sum + item.qty, 0);
     row.stock = total;
-    const stored = await env.DB.prepare("SELECT slug FROM product_catalog WHERE id = ?").bind(id).first();
     await env.DB.prepare("UPDATE product_catalog SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
       .bind(JSON.stringify(row), id).run();
     await audit(env, s.username, "product_stock_update", row.title, rawIp);
