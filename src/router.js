@@ -785,10 +785,18 @@ async function apiRoutes(request, env, path) {
         stmts.push(setStatus);
         await env.DB.batch(stmts);
       } else if (wasCancelled && !nowCancelled) {
+        const restored = [];
         for (const l of lines) {
           const taken = await env.DB.prepare("UPDATE product_inventory SET qty = qty - ? WHERE product_id = ? AND color = ? AND size = ? AND qty >= ?")
             .bind(l.qty, productId, l.color, l.size, l.qty).run();
-          if (!taken.meta || taken.meta.changes === 0) throw new HttpError(400, "স্টক না থাকায় অর্ডার আবার চালু করা যাবে না!");
+          if (!taken.meta || taken.meta.changes === 0) {
+            for (const back of restored) {
+              await env.DB.prepare("UPDATE product_inventory SET qty = qty + ? WHERE product_id = ? AND color = ? AND size = ?")
+                .bind(back.qty, productId, back.color, back.size).run();
+            }
+            throw new HttpError(400, "স্টক না থাকায় অর্ডার আবার চালু করা যাবে না!");
+          }
+          restored.push(l);
         }
         await setStatus.run();
       } else await setStatus.run();
