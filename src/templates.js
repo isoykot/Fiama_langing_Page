@@ -1690,6 +1690,31 @@ function renderAdminHTML(nonce) {
       .pr-side { position:relative !important; top:auto !important; }
     }
 
+    /* Mobile print settings: keep POS above Invoice regardless of which editor is open. */
+    @media (max-width:899px) {
+      .print-choice-grid.has-open-choice {
+        grid-template-columns:minmax(0,1fr) !important;
+        grid-template-rows:auto auto auto !important;
+      }
+      .print-choice-grid.has-open-choice .print-choice.pos-choice {
+        grid-column:1 !important;
+        grid-row:1 !important;
+        width:100% !important;
+      }
+      .print-choice-grid.has-open-choice .print-choice:not(.pos-choice) {
+        grid-column:1 !important;
+        grid-row:2 !important;
+        width:100% !important;
+      }
+      .print-choice-grid.has-open-choice .print-shared-preview {
+        grid-column:1 !important;
+        grid-row:3 !important;
+        position:relative !important;
+        top:auto !important;
+        width:100% !important;
+      }
+    }
+
     /* Touch-friendly controls and visible horizontal table affordance on phones. */
     @media (max-width:760px) {
       #appView .topbar .icon-btn { min-width:40px; min-height:40px; }
