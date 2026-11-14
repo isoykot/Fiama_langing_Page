@@ -2101,22 +2101,18 @@ function renderAdminHTML(nonce) {
 
         <div class="card" id="multiProductManager">
           <div class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-            <div><h3>Products</h3><p class="hint-text">প্রতিটি প্রোডাক্টের আলাদা পেজ ও অর্ডার লিংক</p></div>
+            <div><h3>Available Product</h3><p class="hint-text">মোট প্রোডাক্ট, Active/Inactive অবস্থা এবং ম্যানেজমেন্ট</p></div>
             <button type="button" class="btn" data-action="product-create">+ নতুন Product</button>
           </div>
-          <div id="productList" class="grid-2" style="margin-top:12px;"></div>
+          <div class="stats" id="productSummary" style="margin:12px 0;"></div><div id="productList" class="grid-2" style="margin-top:12px;"></div>
           <div id="selectedProductLink" class="hint-text" style="margin-top:10px;"></div>
         </div>
 
-        <div class="card hidden" id="productStockPanel">
-          <div class="row" style="justify-content:space-between;align-items:center;">
-            <h3>এই Product-এর Stock</h3>
-            <button type="button" class="btn sm" data-action="product-stock-save">Stock Save</button>
+        <div id="productEditorPage" class="hidden">
+          <div class="row" style="justify-content:space-between;align-items:center;margin:14px 0;">
+            <button type="button" class="btn ghost" data-action="product-back">← Available Product</button>
+            <span class="hint-text" id="productEditorName"></span>
           </div>
-          <div id="productStockGrid" style="margin-top:10px;"></div>
-          <p class="hint-text">এই স্টক শুধু নির্বাচিত Product-এর অর্ডারে কমবে।</p>
-        </div>
-
         <div class="card">
           <h3 data-i18n="tb_title"></h3>
           <p class="hint-text" style="margin:-4px 0 10px;" data-i18n="tb_hint"></p>
@@ -2226,6 +2222,7 @@ function renderAdminHTML(nonce) {
 
         <div class="savebar"><button class="btn" id="saveBtn" data-action="save-product" data-i18n="save_all"></button></div>
         <div class="msg" id="productMsg"></div>
+        </div>
       </section>
 
       <!-- Offers -->
@@ -2348,6 +2345,10 @@ function renderAdminHTML(nonce) {
         <div class="view-head"><div><h2 data-i18n="inv_title_h"></h2><p data-i18n="inv_sub"></p></div>
           <button class="btn ghost sm" data-action="refresh" data-i18n="refresh"></button></div>
 
+        <div class="card">
+          <div class="field"><label for="inventoryProductSelect">Product নির্বাচন করুন</label><select class="input" id="inventoryProductSelect"></select></div>
+          <p class="hint-text">নির্বাচিত Product-এর স্টক এখানে যোগ ও পরিবর্তন করুন।</p>
+        </div>
         <div class="card">
           <h3 data-i18n="inv_add_title"></h3>
           <p class="hint-text" style="margin:-4px 0 10px;" data-i18n="inv_add_hint"></p>
@@ -3953,47 +3954,67 @@ function renderAdminHTML(nonce) {
 
     /* ---------- Product ---------- */
 
+    var PRODUCT_EDITOR_OPEN = false;
+    var INV_PRODUCT_ID = 1;
+
     async function loadProduct() {
       var list = await api('/api/admin/products');
-      if (list.ok) {
-        PRODUCTS = list.data.products || [];
-        if (!PRODUCTS.some(function (p) { return Number(p.id) === Number(PRODUCT_ID); })) PRODUCT_ID = 1;
-        renderProductList();
-      }
+      if (list.ok) PRODUCTS = list.data.products || [];
+      renderProductList();
+      $('multiProductManager').classList.remove('hidden');
+      $('productEditorPage').classList.toggle('hidden', !PRODUCT_EDITOR_OPEN);
+      if (!PRODUCT_EDITOR_OPEN) return;
+      if (!PRODUCTS.some(function (p) { return Number(p.id) === Number(PRODUCT_ID); })) PRODUCT_ID = 1;
       if (Number(PRODUCT_ID) === 1) {
         var s = await api('/api/admin/stats');
         if (s.ok) PRODUCT = s.data.product || PRODUCT;
-        PRODUCT_SLUG = "";
-        $('productStockPanel').classList.add('hidden');
+        PRODUCT_SLUG = '';
       } else {
         var detail = await api('/api/admin/products/' + PRODUCT_ID);
         if (!detail.ok) { toast(detail.data.error || 'Product load failed', 'err'); return; }
         PRODUCT = detail.data.product || {};
         PRODUCT_SLUG = detail.data.slug || '';
-        PRODUCT_STOCK_ROWS = detail.data.inventory || [];
-        $('productStockPanel').classList.remove('hidden');
-        renderProductStock();
       }
       fillProduct();
-      renderProductList();
+      $('productEditorName').textContent = PRODUCT.title || '';
     }
 
     function renderProductList() {
       var box = $('productList');
       if (!box) return;
+      var active = PRODUCTS.filter(function(p){return !!p.active;}).length;
+      var inactive = PRODUCTS.length - active;
+      $('productSummary').innerHTML =
+        '<div class="stat"><strong>' + PRODUCTS.length + '</strong><span>মোট Product</span></div>' +
+        '<div class="stat"><strong>' + active + '</strong><span>Active</span></div>' +
+        '<div class="stat"><strong>' + inactive + '</strong><span>Inactive</span></div>';
       box.innerHTML = PRODUCTS.map(function (p) {
-        var selected = Number(p.id) === Number(PRODUCT_ID);
         var link = p.url || '/';
-        return '<div class="card" style="padding:12px;border:1px solid ' + (selected ? 'var(--brand)' : 'var(--line)') + ';">' +
+        return '<div class="card" style="padding:14px;cursor:pointer;" data-action="product-select" data-product-id="' + p.id + '">' +
           '<div class="row" style="justify-content:space-between;gap:8px;"><strong>' + esc(p.title) + '</strong>' +
           '<span class="badge ' + (p.active ? 's-Delivered' : 's-Cancelled') + '">' + (p.active ? 'Active' : 'Inactive') + '</span></div>' +
-          '<div class="hint-text" style="margin:6px 0;">' + esc(link) + '</div>' +
-          '<div class="row" style="gap:8px;flex-wrap:wrap;"><button type="button" class="btn sm ' + (selected ? 'ghost' : '') + '" data-action="product-select" data-product-id="' + p.id + '">' + (selected ? 'Selected' : 'Edit Product') + '</button>' +
+          '<div class="hint-text" style="margin:7px 0;">' + esc(link) + '</div>' +
+          '<div class="row" style="gap:8px;flex-wrap:wrap;">' +
+          '<button type="button" class="btn sm" data-action="product-select" data-product-id="' + p.id + '">Open / Edit</button>' +
+          '<button type="button" class="btn sm ' + (p.active ? 'danger' : 'ghost') + '" data-action="product-toggle" data-product-id="' + p.id + '" data-on="' + (p.active ? '1' : '0') + '">' + (p.active ? 'Deactivate' : 'Activate') + '</button>' +
           '<button type="button" class="btn sm ghost" data-action="product-copy-link" data-link="' + esc(location.origin + link) + '">Copy Link</button></div></div>';
       }).join('');
-      $('selectedProductLink').textContent = Number(PRODUCT_ID) === 1
-        ? 'Main Product: ' + location.origin + '/'
-        : 'Selected Product Link: ' + location.origin + '/p/' + PRODUCT_SLUG;
+    }
+
+    async function openProductEditor(id) {
+      PRODUCT_ID = Number(id) || 1;
+      PRODUCT_EDITOR_OPEN = true;
+      store.set('admin_product_id', PRODUCT_ID);
+      $('multiProductManager').classList.add('hidden');
+      $('productEditorPage').classList.remove('hidden');
+      await loadProduct();
+    }
+
+    async function toggleProductStatus(id, currentlyOn) {
+      var r = await api('/api/admin/products/' + id + '/status', 'POST', { active: !currentlyOn });
+      if (!r.ok) { toast(r.data.error || 'Status update failed', 'err'); return; }
+      toast(!currentlyOn ? 'Product Active করা হয়েছে' : 'Product Inactive করা হয়েছে', 'ok');
+      await loadProductListOnly();
     }
 
     async function createProduct() {
@@ -4002,37 +4023,10 @@ function renderAdminHTML(nonce) {
       var r = await api('/api/admin/products', 'POST', { title: title.trim() });
       if (!r.ok) { toast(r.data.error || 'Product create failed', 'err'); return; }
       PRODUCT_ID = Number(r.data.id);
+      PRODUCT_EDITOR_OPEN = true;
       store.set('admin_product_id', PRODUCT_ID);
-      toast('নতুন Product তৈরি হয়েছে। এখন তথ্য ও ছবি দিয়ে Save করুন।', 'ok');
+      toast('নতুন Product তৈরি হয়েছে। আগে তথ্য ও ছবি Save করুন, এরপর Inventory থেকে Stock যোগ করুন।', 'ok');
       await loadProduct();
-    }
-
-    function renderProductStock() {
-      var colors = splitList(PRODUCT.colors || '');
-      var sizes = splitList(PRODUCT.sizes || '');
-      var cs = colors.length ? colors : [''];
-      var ss = sizes.length ? sizes : [''];
-      var map = {};
-      PRODUCT_STOCK_ROWS.forEach(function (r) { map[r.color + '|' + r.size] = Number(r.qty) || 0; });
-      var html = '<table><thead><tr><th>Color</th>' + ss.map(function (z) { return '<th>' + esc(z || 'Single') + '</th>'; }).join('') + '</tr></thead><tbody>';
-      cs.forEach(function (c) {
-        html += '<tr><th>' + esc(c || 'Single') + '</th>' + ss.map(function (z) {
-          return '<td><input class="input product-stock-input" type="number" min="0" max="100000" data-color="' + esc(c) + '" data-size="' + esc(z) + '" value="' + (map[c + '|' + z] || 0) + '"></td>';
-        }).join('') + '</tr>';
-      });
-      $('productStockGrid').innerHTML = html + '</tbody></table>';
-    }
-
-    async function saveProductStock() {
-      var items = Array.from(document.querySelectorAll('.product-stock-input')).map(function (el) {
-        return { color: el.getAttribute('data-color') || '', size: el.getAttribute('data-size') || '', qty: Number(el.value) || 0 };
-      });
-      var r = await api('/api/admin/product-inventory', 'POST', { product_id: PRODUCT_ID, items: items });
-      if (!r.ok) { toast(r.data.error || 'Stock save failed', 'err'); return; }
-      toast('এই Product-এর Stock Save হয়েছে', 'ok');
-      var d = await api('/api/admin/products/' + PRODUCT_ID);
-      if (d.ok) { PRODUCT = d.data.product || PRODUCT; PRODUCT_STOCK_ROWS = d.data.inventory || []; renderProductStock(); fillProduct(); }
-      await loadProductListOnly();
     }
 
     async function loadProductListOnly() {
@@ -4790,11 +4784,27 @@ function renderAdminHTML(nonce) {
     /* ---------- Inventory ---------- */
 
     async function loadInventory() {
-      var s = await api('/api/admin/stats');
-      if (s.ok) PRODUCT = s.data.product || PRODUCT;
-      var r = await api('/api/admin/inventory');
-      if (!r.ok) return;
-      INV_ROWS = r.data.rows || [];
+      var list = await api('/api/admin/products');
+      if (list.ok) {
+        PRODUCTS = list.data.products || [];
+        var sel = $('inventoryProductSelect');
+        var current = String(INV_PRODUCT_ID);
+        sel.innerHTML = PRODUCTS.map(function(p){return '<option value="' + p.id + '">' + esc(p.title) + (p.active ? ' (Active)' : ' (Inactive)') + '</option>';}).join('');
+        if (!PRODUCTS.some(function(p){return String(p.id) === current;})) INV_PRODUCT_ID = 1;
+        sel.value = String(INV_PRODUCT_ID);
+      }
+      if (Number(INV_PRODUCT_ID) === 1) {
+        var s = await api('/api/admin/stats');
+        if (s.ok) PRODUCT = s.data.product || PRODUCT;
+        var r = await api('/api/admin/inventory');
+        if (!r.ok) return;
+        INV_ROWS = r.data.rows || [];
+      } else {
+        var d = await api('/api/admin/products/' + INV_PRODUCT_ID);
+        if (!d.ok) { toast(d.data.error || 'Product load failed', 'err'); return; }
+        PRODUCT = d.data.product || {};
+        INV_ROWS = d.data.inventory || [];
+      }
       renderInventory();
     }
 
@@ -4851,7 +4861,9 @@ function renderAdminHTML(nonce) {
       document.querySelectorAll('#invTable .inv-in').forEach(function (inp) {
         items.push({ color: inp.getAttribute('data-c'), size: inp.getAttribute('data-s'), qty: Number(inp.value) || 0 });
       });
-      var r = await api('/api/admin/inventory', 'POST', { items: items });
+      var r = Number(INV_PRODUCT_ID) === 1
+        ? await api('/api/admin/inventory', 'POST', { items: items })
+        : await api('/api/admin/product-inventory', 'POST', { product_id: INV_PRODUCT_ID, items: items });
       if (r.ok) { toast(t('inv_saved'), 'ok'); loadInventory(); }
       else toast(r.data.error || t('status_fail'), 'err');
     }
@@ -4861,7 +4873,9 @@ function renderAdminHTML(nonce) {
       var size = $('ivSize').value.trim();
       var qty = Number($('ivQty').value) || 0;
       if (!color && !size) { setMsg('ivMsg', t('inv_add_need'), false); return; }
-      var r = await api('/api/admin/inventory/add', 'POST', { color: color, size: size, qty: qty });
+      var r = Number(INV_PRODUCT_ID) === 1
+        ? await api('/api/admin/inventory/add', 'POST', { color: color, size: size, qty: qty })
+        : await api('/api/admin/product-inventory/add', 'POST', { product_id: INV_PRODUCT_ID, color: color, size: size, qty: qty });
       if (r.ok) {
         setMsg('ivMsg', t('inv_added'), true);
         toast(t('inv_added'), 'ok');
@@ -5471,6 +5485,13 @@ function renderAdminHTML(nonce) {
       toggleAccountMenu(false);
     }
 
+    document.addEventListener('change', function (e) {
+      if (e.target && e.target.id === 'inventoryProductSelect') {
+        INV_PRODUCT_ID = Number(e.target.value) || 1;
+        loadInventory();
+      }
+    });
+
     document.addEventListener('click', function (e) {
       var wrap = $('accountMenuWrap');
       if (wrap && !wrap.contains(e.target)) closeAccountMenu();
@@ -5562,9 +5583,10 @@ function renderAdminHTML(nonce) {
       else if (a === 'notice-del') { NOTICES.splice(Number(el.getAttribute('data-idx')), 1); renderNotices(); }
       else if (a === 'notice-img-del') { NOTICES[Number(el.getAttribute('data-idx'))].image = ''; renderNotices(); }
       else if (a === 'product-create') createProduct();
-      else if (a === 'product-select') { PRODUCT_ID = Number(el.getAttribute('data-product-id')) || 1; store.set('admin_product_id', PRODUCT_ID); loadProduct(); }
+      else if (a === 'product-select') openProductEditor(el.getAttribute('data-product-id'));
+      else if (a === 'product-back') { PRODUCT_EDITOR_OPEN = false; $('productEditorPage').classList.add('hidden'); $('multiProductManager').classList.remove('hidden'); }
+      else if (a === 'product-toggle') toggleProductStatus(Number(el.getAttribute('data-product-id')), el.getAttribute('data-on') === '1');
       else if (a === 'product-copy-link') copyText(el.getAttribute('data-link'));
-      else if (a === 'product-stock-save') saveProductStock();
       else if (a === 'save-product') saveProduct();
       else if (a === 'add-user') addUser();
       else if (a === 'reset-user') resetUser(id);
