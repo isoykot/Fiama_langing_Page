@@ -1096,6 +1096,7 @@ export async function ensureSchema(env) {
     "M, L, XL"
   ).run();
 
+  await db.prepare("UPDATE orders SET product_title = (SELECT title FROM product WHERE id = 1) WHERE product_title IS NULL OR product_title = ''").run();
   const missing = await db.prepare("SELECT id FROM orders WHERE public_id IS NULL OR public_id = ''").all();
   for (const row of missing.results || []) {
     await db.prepare("UPDATE orders SET public_id = ? WHERE id = ?").bind(newPublicId(), row.id).run();
