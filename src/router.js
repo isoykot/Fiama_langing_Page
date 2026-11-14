@@ -67,7 +67,7 @@ import { renderAdminHTML, renderInactiveHTML, renderLandingHTML } from "./templa
 
 function catalogSlug(value) {
   const slug = String(value || "").toLowerCase().normalize("NFKD")
-    .replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")
+    .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "").slice(0, 56);
   return slug || "product";
 }
@@ -114,7 +114,7 @@ async function route(request, env, nonce) {
     return handleApi(request, env, path);
   }
 
-  const productPath = path.match(/^\\/p\\/([a-z0-9-]+)\\/?$/i);
+  const productPath = path.match(/^\/p\/([a-z0-9-]+)\/?$/i);
   if (productPath) {
     const found = await env.DB.prepare("SELECT id, slug, title, data FROM product_catalog WHERE slug = ?").bind(productPath[1]).first();
     if (!found) return new Response("প্রোডাক্টটি পাওয়া যায়নি", { status: 404 });
@@ -408,7 +408,7 @@ async function apiRoutes(request, env, path) {
     return json({ success: true, id, slug, url: "/p/" + slug });
   }
 
-  const catalogDetail = path.match(/^\\/api\\/admin\\/products\\/(\\d+)$/);
+  const catalogDetail = path.match(/^\/api\/admin\/products\/(\d+)$/);
   if (catalogDetail && m === "GET") {
     await authorize(request, env);
     const id = Number(catalogDetail[1]);
