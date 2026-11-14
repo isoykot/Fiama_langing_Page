@@ -3616,7 +3616,7 @@ function renderAdminHTML(nonce) {
       var rows = lines.map(function(l) {
         var variant = [l.color,l.size].filter(function(x){return x&&x!=='N/A';}).map(esc).join(' / ');
         var n = Number(l.qty) || 0;
-        return '<tr><td><strong>' + esc(PRODUCT.title || c.brand || 'Product') + '</strong>' + (variant ? '<small>' + variant + '</small>' : '') + '</td><td>' + n + '</td><td>' + money(unit) + '</td><td>' + money(unit*n) + '</td></tr>';
+        return '<tr><td><strong>' + esc(o.product_title || PRODUCT.title || c.brand || 'Product') + '</strong>' + (variant ? '<small>' + variant + '</small>' : '') + '</td><td>' + n + '</td><td>' + money(unit) + '</td><td>' + money(unit*n) + '</td></tr>';
       }).join('');
       var method = o.payment_method || '';
       var received = method === 'Paid' ? Number(o.total||0) : method === 'COD' || !method ? 0 : Number(o.payment_received||0);
@@ -3629,7 +3629,7 @@ function renderAdminHTML(nonce) {
         '<div><span>Delivery charge</span><b>' + money(o.delivery_charge||0) + '</b></div>' +
         (method === 'Delivery' ? '<div><span>Pay Delivery Charge</span><b>−' + money(received) + '</b></div>' : '') +
         '<div class="inv-total"><span>Total</span><b>' + money(due) + '</b></div>';
-      return '<div class="invoice-sheet"><header class="inv-top"><div class="inv-brand">' + logo + '<div><strong>' + esc(c.brand||PRODUCT.title||'Fiama Fashion') + '</strong>' + (c.tagline ? '<small>' + esc(c.tagline) + '</small>' : '') + '</div></div><div class="inv-title">Invoice</div></header>' +
+      return '<div class="invoice-sheet"><header class="inv-top"><div class="inv-brand">' + logo + '<div><strong>' + esc(c.brand||o.product_title||PRODUCT.title||'Fiama Fashion') + '</strong>' + (c.tagline ? '<small>' + esc(c.tagline) + '</small>' : '') + '</div></div><div class="inv-title">Invoice</div></header>' +
         '<section class="inv-parties"><div class="inv-bill"><h3>Billed to:</h3><strong>' + esc(o.customer_name||'') + '</strong><span>' + esc(o.phone||'') + '</span><span>' + esc(o.address||'') + '</span>' + (o.delivery_area ? '<span>' + esc(o.delivery_area) + '</span>' : '') + '</div><div class="inv-number"><strong>Order ID: ' + esc(o.public_id) + '</strong><span>Date: ' + fmtInvoiceDate(o.created_at) + '</span></div></section>' +
         '<table class="inv-table"><thead><tr><th>Item</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>' + rows + '</tbody></table><section class="inv-totals">' + totals + '</section>' +
         '<section class="inv-payment"><h3>Payment Information</h3><div class="inv-pay-row"><span>Payment method</span><strong>' + esc(methodLabel) + '</strong></div>' +
@@ -3668,7 +3668,7 @@ function renderAdminHTML(nonce) {
         var lq = Number(l.qty) || 0;
         var variant = [S.color ? l.color : '', S.size ? l.size : ''].filter(function (x) { return x && x !== 'N/A'; }).map(esc).join(' / ');
         var qtyTxt = S.qty ? lq + ' ' + t('qty_unit') + (S.unit ? ' × ' + money(unit) : '') + ' =' : '';
-        return '<div class="pd-item"><div class="pd-name">' + (S.num ? (i + 1) + '. ' : '') + esc(PRODUCT.title || '') + '</div>' +
+        return '<div class="pd-item"><div class="pd-name">' + (S.num ? (i + 1) + '. ' : '') + esc(o.product_title || PRODUCT.title || '') + '</div>' +
           '<div class="pd-sub"><span>' + (variant || '&nbsp;') + '</span><span>' + qtyTxt + ' <b>' + money(unit * lq) + '</b></span></div></div>';
       }).join('') + '</div>';
 
@@ -3792,7 +3792,7 @@ function renderAdminHTML(nonce) {
         var items = lines.map(function(l, i) {
           var variant = [S.color ? l.color : '', S.size ? l.size : ''].filter(function(x) { return x && x !== 'N/A'; }).map(esc).join(' / ');
           var n = Number(l.qty) || 0;
-          return '<div class="receipt-item"><strong>' + (S.num ? (i + 1) + '. ' : '') + esc(PRODUCT.title || '') + '</strong>' +
+          return '<div class="receipt-item"><strong>' + (S.num ? (i + 1) + '. ' : '') + esc(o.product_title || PRODUCT.title || '') + '</strong>' +
             '<div class="receipt-item-sub"><span>' + (variant || '') + '</span><b>' + (S.qty ? n + ' × ' + money(unit) + ' = ' : '') + money(unit * n) + '</b></div></div>';
         }).join('');
         var method = String(o.payment_method || '');
@@ -3821,7 +3821,7 @@ function renderAdminHTML(nonce) {
           '#' + sc + ' .receipt-cod{border:1px dashed #000;padding:7px 5px;text-align:center;font-size:10px;font-weight:700;margin:8px 0 10px}' +
           '#' + sc + ' .receipt-footer{text-align:center;font-size:9px;line-height:1.5;margin-top:8px}' +
           '@media print{#' + sc + '{width:' + ((c.page === '58mm') ? '58mm' : '80mm') + ';max-width:none;margin:0;padding:2mm 1.5mm}#' + sc + ' .receipt-grand{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#000!important;color:#fff!important}}' +
-          '</style><div id="' + sc + '" class="doc-pos"><div class="receipt-head"><div class="receipt-brand"><strong>' + esc(c.brand || PRODUCT.title || 'Fiama Fashion') + '</strong>' +
+          '</style><div id="' + sc + '" class="doc-pos"><div class="receipt-head"><div class="receipt-brand"><strong>' + esc(c.brand || o.product_title || PRODUCT.title || 'Fiama Fashion') + '</strong>' +
           (c.tagline ? '<small>' + esc(c.tagline) + '</small>' : '') +
           '<div class="receipt-meta">' + (S.num ? '<b>Order ID: ' + esc(o.public_id) + '</b><br>' : '') +
           (S.date ? 'Date: ' + esc(fmtDate(o.created_at)) + '<br>' : '') + (S.status ? 'Status: ' + esc(statusLabel(o.status)) : '') +
