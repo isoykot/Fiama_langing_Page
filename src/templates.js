@@ -5285,6 +5285,7 @@ function renderAdminHTML(nonce) {
 
     /* Android / mobile browser Back handling for admin navigation and accordions. */
     var ADMIN_EXIT_PROMPT_OPEN = false;
+    var ADMIN_MANUAL_PANEL_BACK = false;
     document.addEventListener('toggle', function (e) {
       var panel = e.target;
       if (!panel || panel.tagName !== 'DETAILS' || !panel.closest('#appView')) return;
@@ -5293,11 +5294,13 @@ function renderAdminHTML(nonce) {
           history.pushState({ fiamaAdminAccordion: panel.id || 'open-panel', fiamaAdminView: VIEW }, '', location.href);
         } catch (err) {}
       } else if (history.state && history.state.fiamaAdminAccordion === (panel.id || 'open-panel')) {
-        try { history.back(); } catch (err) {}
+        ADMIN_MANUAL_PANEL_BACK = true;
+        try { history.back(); } catch (err) { ADMIN_MANUAL_PANEL_BACK = false; }
       }
     }, true);
 
     window.addEventListener('popstate', function (e) {
+      if (ADMIN_MANUAL_PANEL_BACK) { ADMIN_MANUAL_PANEL_BACK = false; return; }
       if (!TOKEN || !ADMIN_HISTORY_READY) return;
 
       // Close the most recently opened disclosure/option before leaving its page.
