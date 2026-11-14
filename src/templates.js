@@ -623,7 +623,8 @@ function renderLandingHTML(p, inv, nonce, notes = {}, productId = 1) {
             quantity: qty,
             area: selectedArea || '',
             coupon: $('coupon').value.trim(),
-            phone: $('phone').value.replace(/\\D/g, '')
+            phone: $('phone').value.replace(/\\D/g, ''),
+            product_id: ${productId}
           })
         });
         const data = await res.json().catch(() => null);
