@@ -75,8 +75,12 @@ function catalogSlug(value) {
 async function catalogProduct(db, id) {
   const row = await db.prepare("SELECT id, slug, title, data FROM product_catalog WHERE id = ?").bind(id).first();
   if (!row) return null;
-  try { return { ...JSON.parse(row.data), id: row.id, slug: row.slug, title: row.title }; }
-  catch (e) { return null; }
+  try {
+    const data = { ...JSON.parse(row.data), id: row.id, slug: row.slug, title: row.title };
+    const stock = await db.prepare("SELECT COALESCE(SUM(qty), 0) AS total FROM product_inventory WHERE product_id = ?").bind(id).first();
+    data.stock = Number(stock && stock.total) || 0;
+    return data;
+  } catch (e) { return null; }
 }
 
 async function productInventory(db, productId) {
@@ -114,8 +118,7 @@ async function route(request, env, nonce) {
   if (productPath) {
     const found = await env.DB.prepare("SELECT id, slug, title, data FROM product_catalog WHERE slug = ?").bind(productPath[1]).first();
     if (!found) return new Response("প্রোডাক্টটি পাওয়া যায়নি", { status: 404 });
-    let row = null;
-    try { row = { ...JSON.parse(found.data), id: found.id, title: found.title }; } catch (e) {}
+    const row = await catalogProduct(env.DB, found.id);
     if (!row || Number(row.is_active) === 0) {
       return new Response(renderInactiveHTML(), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
@@ -545,11 +548,7 @@ async function apiRoutes(request, env, path) {
           "INSERT OR IGNORE INTO product_inventory (product_id, color, size, qty) VALUES (?, ?, ?, 0)"
         ).bind(productId, color, size));
       }
-      const oldInv = await productInventory(env.DB, productId);
-      for (const item of oldInv) if (!keep.has(item.color + "|" + item.size)) {
-        stmts.push(env.DB.prepare("DELETE FROM product_inventory WHERE product_id = ? AND color = ? AND size = ?")
-          .bind(productId, item.color, item.size));
-      }
+      // Keep retired variant rows: older orders may still need to restore stock to them.
       if (stmts.length) await env.DB.batch(stmts);
       await audit(env, s.username, "product_update", title + " (" + (slugRow ? slugRow.slug : productId) + ")", rawIp);
       return json({ success: true, product_id: productId });
