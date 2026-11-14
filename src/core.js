@@ -1009,6 +1009,9 @@ export async function ensureSchema(env) {
     )`)
   ]);
 
+  // Reserve catalog ID 1 for the existing legacy product; new products start at ID 2.
+  await db.prepare("INSERT OR IGNORE INTO product_catalog (id, slug, title, data) VALUES (1, '__legacy__', '__legacy__', '{}')").run();
+
   // পুরোনো database-এ missing column যোগ (থাকলে error ignore)
   const alterQueries = [
     "ALTER TABLE product ADD COLUMN image TEXT",
