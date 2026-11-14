@@ -977,6 +977,21 @@ export async function ensureSchema(env) {
       qty INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (color, size)
     )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS product_catalog (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      data TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS product_inventory (
+      product_id INTEGER NOT NULL,
+      color TEXT NOT NULL DEFAULT '',
+      size TEXT NOT NULL DEFAULT '',
+      qty INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (product_id, color, size)
+    )`),
     db.prepare(`CREATE TABLE IF NOT EXISTS coupons (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL UNIQUE,
@@ -1041,6 +1056,8 @@ export async function ensureSchema(env) {
     "ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT ''",
     "ALTER TABLE orders ADD COLUMN payment_received INTEGER DEFAULT 0",
     "ALTER TABLE orders ADD COLUMN lines_json TEXT DEFAULT ''",
+    "ALTER TABLE orders ADD COLUMN product_id INTEGER NOT NULL DEFAULT 1",
+    "ALTER TABLE orders ADD COLUMN product_title TEXT DEFAULT ''",
     "ALTER TABLE audit_log ADD COLUMN ip_hash TEXT",
     "ALTER TABLE coupons ADD COLUMN issued_order TEXT"
   ];
@@ -1315,7 +1332,8 @@ export async function getOrderLines(env, id, qtyFallback) {
 
 export const ORDER_COLS = `public_id, customer_name, phone, address, selected_color, selected_size,
   delivery_area, delivery_charge, quantity, total, status, created_at, note, subtotal,
-  bulk_discount, coupon_discount, coupon_code, lines_json, payment_method, payment_received`;
+  bulk_discount, coupon_discount, coupon_code, lines_json, payment_method, payment_received,
+  product_id, product_title`;
 
 export async function searchOrders(env, opts) {
   const db = env.DB;
