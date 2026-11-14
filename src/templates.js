@@ -3339,6 +3339,7 @@ function renderAdminHTML(nonce) {
         '<div class="ohead"><span class="pid" data-action="copy" data-copy="' + esc(o.public_id) + '">' + esc(o.public_id) + '</span>' +
         '<span class="badge s-' + esc(o.status) + '">' + esc(statusLabel(o.status)) + '</span></div>' +
         '<div class="oname">' + esc(o.customer_name) + '</div>' +
+        '<div class="ometa">🛍️ ' + esc(o.product_title || 'Main Product') + '</div>' +
         '<div class="ometa">📞 ' + esc(o.phone) + ' · ' + esc(o.delivery_area || '') + '</div>' +
         '<div class="ofoot"><strong>' + money(o.total) + '</strong><small>' + fmtDate(o.created_at) + '</small></div>' +
         '</div>';
@@ -3394,6 +3395,7 @@ function renderAdminHTML(nonce) {
         '<dl class="kv">' +
           '<dt>' + esc(t('d_phone')) + '</dt><dd>' + esc(o.phone) + '</dd>' +
           '<dt>' + esc(t('d_address')) + '</dt><dd>' + esc(o.address) + '</dd>' +
+          '<dt>Product</dt><dd>' + esc(o.product_title || 'Main Product') + '</dd>' +
           '<dt>' + esc(t('d_area')) + '</dt><dd>' + esc(o.delivery_area) + '</dd>' +
           '<dt>' + esc(t('d_variant')) + '</dt><dd>' + esc(linesText(o)) + '</dd>' +
           '<dt>' + esc(t('d_qty')) + '</dt><dd>' + Number(o.quantity) + ' ' + esc(t('qty_unit')) + '</dd>' +
