@@ -73,6 +73,7 @@ function catalogSlug(value) {
 }
 
 async function catalogProduct(db, id) {
+  if (!Number.isInteger(Number(id)) || Number(id) < 2) return null;
   const row = await db.prepare("SELECT id, slug, title, data FROM product_catalog WHERE id = ?").bind(id).first();
   if (!row) return null;
   try {
@@ -376,7 +377,7 @@ async function apiRoutes(request, env, path) {
   if (path === "/api/admin/products" && m === "GET") {
     await authorize(request, env);
     const legacy = await getProductRow(env.DB);
-    const { results } = await env.DB.prepare("SELECT id, slug, title, data FROM product_catalog ORDER BY id DESC").all();
+    const { results } = await env.DB.prepare("SELECT id, slug, title, data FROM product_catalog WHERE id > 1 ORDER BY id DESC").all();
     const products = [];
     if (legacy) products.push({ id: 1, slug: "", title: legacy.title || "Main product", active: Number(legacy.is_active) !== 0, url: "/" });
     for (const r of results || []) {
