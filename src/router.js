@@ -402,6 +402,7 @@ async function apiRoutes(request, env, path) {
     if (!legacy) throw new HttpError(500, "মূল প্রোডাক্টের তথ্য পাওয়া যায়নি!");
     const data = { ...legacy, id: null, title, stock: 0, is_active: 0,
       images: "[]", image: "", colors: "", sizes: "", description: "" };
+    delete data.admin_pass;
     const result = await env.DB.prepare(
       "INSERT INTO product_catalog (slug, title, data) VALUES (?, ?, ?)"
     ).bind(slug, title, JSON.stringify(data)).run();
