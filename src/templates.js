@@ -2099,6 +2099,24 @@ function renderAdminHTML(nonce) {
       <section id="v-product" class="view hidden">
         <div class="view-head"><div><h2 data-i18n="prod_title"></h2><p data-i18n="prod_sub"></p></div></div>
 
+        <div class="card" id="multiProductManager">
+          <div class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div><h3>Products</h3><p class="hint-text">প্রতিটি প্রোডাক্টের আলাদা পেজ ও অর্ডার লিংক</p></div>
+            <button type="button" class="btn" data-action="product-create">+ নতুন Product</button>
+          </div>
+          <div id="productList" class="grid-2" style="margin-top:12px;"></div>
+          <div id="selectedProductLink" class="hint-text" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="card hidden" id="productStockPanel">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <h3>এই Product-এর Stock</h3>
+            <button type="button" class="btn sm" data-action="product-stock-save">Stock Save</button>
+          </div>
+          <div id="productStockGrid" style="margin-top:10px;"></div>
+          <p class="hint-text">এই স্টক শুধু নির্বাচিত Product-এর অর্ডারে কমবে।</p>
+        </div>
+
         <div class="card">
           <h3 data-i18n="tb_title"></h3>
           <p class="hint-text" style="margin:-4px 0 10px;" data-i18n="tb_hint"></p>
@@ -2626,6 +2644,10 @@ function renderAdminHTML(nonce) {
     var ME = null;
     var MUST_CHANGE = false;
     var PRODUCT = {};
+    var PRODUCT_ID = 1;
+    var PRODUCT_SLUG = "";
+    var PRODUCTS = [];
+    var PRODUCT_STOCK_ROWS = [];
     var STATS = {};
     var ORDERS = [];
     var CACHE = {};
@@ -3930,9 +3952,89 @@ function renderAdminHTML(nonce) {
     /* ---------- Product ---------- */
 
     async function loadProduct() {
-      var s = await api('/api/admin/stats');
-      if (s.ok) PRODUCT = s.data.product || PRODUCT;
+      var list = await api('/api/admin/products');
+      if (list.ok) {
+        PRODUCTS = list.data.products || [];
+        if (!PRODUCTS.some(function (p) { return Number(p.id) === Number(PRODUCT_ID); })) PRODUCT_ID = 1;
+        renderProductList();
+      }
+      if (Number(PRODUCT_ID) === 1) {
+        var s = await api('/api/admin/stats');
+        if (s.ok) PRODUCT = s.data.product || PRODUCT;
+        PRODUCT_SLUG = "";
+        $('productStockPanel').classList.add('hidden');
+      } else {
+        var detail = await api('/api/admin/products/' + PRODUCT_ID);
+        if (!detail.ok) { toast(detail.data.error || 'Product load failed', 'err'); return; }
+        PRODUCT = detail.data.product || {};
+        PRODUCT_SLUG = detail.data.slug || '';
+        PRODUCT_STOCK_ROWS = detail.data.inventory || [];
+        $('productStockPanel').classList.remove('hidden');
+        renderProductStock();
+      }
       fillProduct();
+      renderProductList();
+    }
+
+    function renderProductList() {
+      var box = $('productList');
+      if (!box) return;
+      box.innerHTML = PRODUCTS.map(function (p) {
+        var selected = Number(p.id) === Number(PRODUCT_ID);
+        var link = p.url || '/';
+        return '<div class="card" style="padding:12px;border:1px solid ' + (selected ? 'var(--brand)' : 'var(--line)') + ';">' +
+          '<div class="row" style="justify-content:space-between;gap:8px;"><strong>' + esc(p.title) + '</strong>' +
+          '<span class="badge ' + (p.active ? 's-Delivered' : 's-Cancelled') + '">' + (p.active ? 'Active' : 'Inactive') + '</span></div>' +
+          '<div class="hint-text" style="margin:6px 0;">' + esc(link) + '</div>' +
+          '<div class="row" style="gap:8px;flex-wrap:wrap;"><button type="button" class="btn sm ' + (selected ? 'ghost' : '') + '" data-action="product-select" data-product-id="' + p.id + '">' + (selected ? 'Selected' : 'Edit Product') + '</button>' +
+          '<button type="button" class="btn sm ghost" data-action="product-copy-link" data-link="' + esc(location.origin + link) + '">Copy Link</button></div></div>';
+      }).join('');
+      $('selectedProductLink').textContent = Number(PRODUCT_ID) === 1
+        ? 'Main Product: ' + location.origin + '/'
+        : 'Selected Product Link: ' + location.origin + '/p/' + PRODUCT_SLUG;
+    }
+
+    async function createProduct() {
+      var title = window.prompt('নতুন Product-এর নাম লিখুন:');
+      if (!title || title.trim().length < 2) return;
+      var r = await api('/api/admin/products', 'POST', { title: title.trim() });
+      if (!r.ok) { toast(r.data.error || 'Product create failed', 'err'); return; }
+      PRODUCT_ID = Number(r.data.id);
+      toast('নতুন Product তৈরি হয়েছে। এখন তথ্য ও ছবি দিয়ে Save করুন।', 'ok');
+      await loadProduct();
+    }
+
+    function renderProductStock() {
+      var colors = splitList(PRODUCT.colors || '');
+      var sizes = splitList(PRODUCT.sizes || '');
+      var cs = colors.length ? colors : [''];
+      var ss = sizes.length ? sizes : [''];
+      var map = {};
+      PRODUCT_STOCK_ROWS.forEach(function (r) { map[r.color + '|' + r.size] = Number(r.qty) || 0; });
+      var html = '<table><thead><tr><th>Color</th>' + ss.map(function (z) { return '<th>' + esc(z || 'Single') + '</th>'; }).join('') + '</tr></thead><tbody>';
+      cs.forEach(function (c) {
+        html += '<tr><th>' + esc(c || 'Single') + '</th>' + ss.map(function (z) {
+          return '<td><input class="input product-stock-input" type="number" min="0" max="100000" data-color="' + esc(c) + '" data-size="' + esc(z) + '" value="' + (map[c + '|' + z] || 0) + '"></td>';
+        }).join('') + '</tr>';
+      });
+      $('productStockGrid').innerHTML = html + '</tbody></table>';
+    }
+
+    async function saveProductStock() {
+      var items = Array.from(document.querySelectorAll('.product-stock-input')).map(function (el) {
+        return { color: el.getAttribute('data-color') || '', size: el.getAttribute('data-size') || '', qty: Number(el.value) || 0 };
+      });
+      var r = await api('/api/admin/product-inventory', 'POST', { product_id: PRODUCT_ID, items: items });
+      if (!r.ok) { toast(r.data.error || 'Stock save failed', 'err'); return; }
+      toast('এই Product-এর Stock Save হয়েছে', 'ok');
+      var d = await api('/api/admin/products/' + PRODUCT_ID);
+      if (d.ok) { PRODUCT = d.data.product || PRODUCT; PRODUCT_STOCK_ROWS = d.data.inventory || []; renderProductStock(); fillProduct(); }
+      await loadProductListOnly();
+    }
+
+    async function loadProductListOnly() {
+      var r = await api('/api/admin/products');
+      if (r.ok) { PRODUCTS = r.data.products || []; renderProductList(); }
     }
 
     function fillProduct() {
@@ -4256,6 +4358,7 @@ function renderAdminHTML(nonce) {
       btn.textContent = t('saving');
       var tb = tbValues();
       var r = await api('/api/admin/product', 'POST', {
+        product_id: PRODUCT_ID,
         title: $('pTitle').value,
         price: $('pPrice').value,
         old_price: $('pOldPrice').value,
@@ -4285,8 +4388,11 @@ function renderAdminHTML(nonce) {
       });
       btn.disabled = false;
       btn.textContent = t('save_all');
-      if (r.ok) { setMsg('productMsg', t('saved_ok'), true); toast(t('saved_toast'), 'ok'); }
-      else setMsg('productMsg', r.data.error || t('status_fail'), false);
+      if (r.ok) {
+        setMsg('productMsg', t('saved_ok'), true);
+        toast(t('saved_toast'), 'ok');
+        await loadProduct();
+      } else setMsg('productMsg', r.data.error || t('status_fail'), false);
     }
 
     /* ---------- Offers & coupons (pro) ---------- */
@@ -5452,6 +5558,10 @@ function renderAdminHTML(nonce) {
       }
       else if (a === 'notice-del') { NOTICES.splice(Number(el.getAttribute('data-idx')), 1); renderNotices(); }
       else if (a === 'notice-img-del') { NOTICES[Number(el.getAttribute('data-idx'))].image = ''; renderNotices(); }
+      else if (a === 'product-create') createProduct();
+      else if (a === 'product-select') { PRODUCT_ID = Number(el.getAttribute('data-product-id')) || 1; loadProduct(); }
+      else if (a === 'product-copy-link') copyText(el.getAttribute('data-link'));
+      else if (a === 'product-stock-save') saveProductStock();
       else if (a === 'save-product') saveProduct();
       else if (a === 'add-user') addUser();
       else if (a === 'reset-user') resetUser(id);
