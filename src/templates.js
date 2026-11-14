@@ -30,7 +30,7 @@ function noticeHtml(n) {
 }
 
 
-function renderLandingHTML(p, inv, nonce, notes = {}) {
+function renderLandingHTML(p, inv, nonce, notes = {}, productId = 1) {
   const price = Number(p.price) || 0;
   const oldPrice = Number(p.old_price) || 0;
   const stock = Math.max(0, Number(p.stock) || 0);
@@ -867,6 +867,7 @@ function renderLandingHTML(p, inv, nonce, notes = {}) {
         area: selectedArea,
         quantity: qty,
         coupon: $('coupon').value.trim(),
+        product_id: ${productId},
         items: units.map((u) => ({ color: u.color || '', size: u.size || '' }))
       };
 
