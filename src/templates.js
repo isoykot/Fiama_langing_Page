@@ -1696,12 +1696,12 @@ function renderAdminHTML(nonce) {
         grid-template-columns:minmax(0,1fr) !important;
         grid-template-rows:auto auto auto !important;
       }
-      .print-choice-grid.has-open-choice .print-choice.pos-choice {
+      .print-choice-grid.has-open-choice .print-choice:not(.pos-choice) {
         grid-column:1 !important;
         grid-row:1 !important;
         width:100% !important;
       }
-      .print-choice-grid.has-open-choice .print-choice:not(.pos-choice) {
+      .print-choice-grid.has-open-choice .print-choice.pos-choice {
         grid-column:1 !important;
         grid-row:2 !important;
         width:100% !important;
@@ -2939,8 +2939,8 @@ function renderAdminHTML(nonce) {
           '<div class="dlg-actions"><button class="btn ghost" data-r="cancel"></button>' +
           '<button class="btn ' + (opts.danger ? 'danger-solid' : '') + '" data-r="ok"></button></div></div>';
         ov.querySelector('.dlg-msg').textContent = opts.msg;
-        ov.querySelector('[data-r="cancel"]').textContent = t('cancel');
-        ov.querySelector('[data-r="ok"]').textContent = t('ok');
+        ov.querySelector('[data-r="cancel"]').textContent = opts.cancelText || t('cancel');
+        ov.querySelector('[data-r="ok"]').textContent = opts.okText || t('ok');
         function done(value) {
           document.removeEventListener('keydown', onKey);
           ov.remove();
@@ -3074,7 +3074,13 @@ function renderAdminHTML(nonce) {
       $('pwBanner').classList.toggle('hidden', !MUST_CHANGE);
       $('todayText').textContent = todayString();
       var saved = store.get('admin_view');
+      ADMIN_HISTORY_READY = false;
       go(VIEWS.indexOf(saved) >= 0 ? saved : 'dashboard');
+      try {
+        history.replaceState({ fiamaAdminRoot: true, fiamaAdminView: VIEW }, '', location.href);
+        history.pushState({ fiamaAdminGuard: true, fiamaAdminView: VIEW }, '', location.href);
+        ADMIN_HISTORY_READY = true;
+      } catch (e) { ADMIN_HISTORY_READY = false; }
     }
 
     function forceLogout(msg) {
@@ -3128,8 +3134,14 @@ function renderAdminHTML(nonce) {
 
     /* ---------- Navigation ---------- */
 
+    var ADMIN_HISTORY_READY = false;
+    var ADMIN_HISTORY_SUPPRESS = false;
+
     function go(view) {
       closeBrandMenu();
+      if (ADMIN_HISTORY_READY && !ADMIN_HISTORY_SUPPRESS && view && view !== VIEW) {
+        try { history.pushState({ fiamaAdminView: view }, '', location.href); } catch (e) {}
+      }
       if (view === 'logs' && $('logsModal')) { openAccountPanel('logsModal', 'logs'); loadLogs(); return; }
       if (view === 'settings' && $('settingsModal')) { openAccountPanel('settingsModal', 'settings'); loadIdGenerator(); return; }
       VIEW = view;
@@ -3210,10 +3222,9 @@ function renderAdminHTML(nonce) {
         setTimeout(function () { showPtr(t('refreshed')); setTimeout(hidePtr, 900); }, 500);
       } else {
         hidePtr();
-        if (Math.abs(dx) > 70 && Math.abs(dy) < 50) {
-          var idx = VIEWS.indexOf(VIEW);
-          var next = dx < 0 ? Math.min(VIEWS.length - 1, idx + 1) : Math.max(0, idx - 1);
-          if (next !== idx) go(VIEWS[next]);
+        if (Math.abs(dx) > 70 && Math.abs(dy) < 50 && (VIEW === 'dashboard' || VIEW === 'orders')) {
+          var nextView = dx < 0 ? (VIEW === 'dashboard' ? 'orders' : null) : (VIEW === 'orders' ? 'dashboard' : null);
+          if (nextView) go(nextView);
         }
       }
       TOUCH = null;
@@ -5271,6 +5282,57 @@ function renderAdminHTML(nonce) {
       }
     }
     window.addEventListener('popstate', function () { closeAccountPanel(true); });
+
+    /* Android / mobile browser Back handling for admin navigation and accordions. */
+    var ADMIN_EXIT_PROMPT_OPEN = false;
+    document.addEventListener('toggle', function (e) {
+      var panel = e.target;
+      if (!panel || panel.tagName !== 'DETAILS' || !panel.closest('#appView')) return;
+      if (panel.open) {
+        try {
+          history.pushState({ fiamaAdminAccordion: panel.id || 'open-panel', fiamaAdminView: VIEW }, '', location.href);
+        } catch (err) {}
+      } else if (history.state && history.state.fiamaAdminAccordion === (panel.id || 'open-panel')) {
+        try { history.back(); } catch (err) {}
+      }
+    }, true);
+
+    window.addEventListener('popstate', function (e) {
+      if (!TOKEN || !ADMIN_HISTORY_READY) return;
+
+      // Close the most recently opened disclosure/option before leaving its page.
+      var openPanels = Array.prototype.slice.call(document.querySelectorAll('#appView details[open]'));
+      if (openPanels.length) {
+        openPanels[openPanels.length - 1].open = false;
+        return;
+      }
+
+      var state = e.state || {};
+      if (state.fiamaAdminView && state.fiamaAdminView !== VIEW) {
+        ADMIN_HISTORY_SUPPRESS = true;
+        go(state.fiamaAdminView);
+        ADMIN_HISTORY_SUPPRESS = false;
+        return;
+      }
+
+      // The root dashboard is the exit boundary. Re-arm the guard after Cancel.
+      if (state.fiamaAdminRoot && VIEW === 'dashboard' && !ADMIN_EXIT_PROMPT_OPEN) {
+        ADMIN_EXIT_PROMPT_OPEN = true;
+        askDialog({
+          msg: LANG === 'bn' ? 'আপনি কি অ্যাডমিন প্যানেল থেকে বের হতে চান?' : 'Do you want to exit the admin panel?',
+          cancelText: LANG === 'bn' ? 'বাতিল' : 'Cancel',
+          okText: LANG === 'bn' ? 'Exit' : 'Exit',
+          danger: true
+        }).then(function (exit) {
+          ADMIN_EXIT_PROMPT_OPEN = false;
+          if (exit) {
+            try { window.open('', '_self'); window.close(); } catch (err) {}
+          } else {
+            try { history.pushState({ fiamaAdminGuard: true, fiamaAdminView: 'dashboard' }, '', location.href); } catch (err) {}
+          }
+        });
+      }
+    });
 
     function toggleBrandMenu(forceOpen) {
       var menu = $('brandMenu');
