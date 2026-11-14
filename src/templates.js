@@ -2002,7 +2002,7 @@ function renderAdminHTML(nonce) {
             aria-controls="brandMenu" title="Menu">🛍️</button>
           <div class="brand-menu hidden" id="brandMenu" role="menu" aria-labelledby="brandMenuTrigger">
             <div class="brand-menu-heading">Menu</div>
-            <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="product"><span aria-hidden="true">🛍️</span><span data-i18n="nav_product">Product</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
+            <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="product"><span aria-hidden="true">🛍️</span><span>Available Product</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
             <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="offers"><span aria-hidden="true">🎟️</span><span data-i18n="nav_offers">Offers &amp; Coupons</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
             <button class="brand-menu-item" type="button" role="menuitem" data-action="go" data-view="inventory"><span aria-hidden="true">📦</span><span data-i18n="nav_inventory">Inventory</span><span class="brand-menu-arrow" aria-hidden="true">›</span></button>
           </div>
@@ -2097,7 +2097,7 @@ function renderAdminHTML(nonce) {
 
       <!-- Product -->
       <section id="v-product" class="view hidden">
-        <div class="view-head"><div><h2 data-i18n="prod_title"></h2><p data-i18n="prod_sub"></p></div></div>
+        <div class="view-head"><div><h2>Available Product</h2><p>প্রোডাক্ট নির্বাচন করুন অথবা নতুন Product তৈরি করুন</p></div></div>
 
         <div class="card" id="multiProductManager">
           <div class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -3181,7 +3181,7 @@ function renderAdminHTML(nonce) {
       });
       if (view === 'dashboard') loadDashboard();
       if (view === 'orders') loadOrders(true);
-      if (view === 'product') loadProduct();
+      if (view === 'product') { PRODUCT_EDITOR_OPEN = false; loadProduct(); }
       if (view === 'offers') loadOffers();
       if (view === 'inventory') loadInventory();
       if (view === 'admins') loadUsers();
