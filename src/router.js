@@ -393,6 +393,27 @@ async function apiRoutes(request, env, path) {
     return json({ products });
   }
 
+  const productStatus = path.match(/^\/api\/admin\/products\/(\d+)\/status$/);
+  if (productStatus && m === "POST") {
+    const s = await authorize(request, env);
+    const id = Number(productStatus[1]);
+    const b = await readJson(request);
+    const active = b.active ? 1 : 0;
+    if (id === 1) {
+      await env.DB.prepare("UPDATE product SET is_active = ? WHERE id = 1").bind(active).run();
+    } else {
+      const row = await env.DB.prepare("SELECT data FROM product_catalog WHERE id = ?").bind(id).first();
+      if (!row) throw new HttpError(404, "প্রোডাক্ট পাওয়া যায়নি!");
+      let data = {};
+      try { data = JSON.parse(row.data); } catch (e) {}
+      data.is_active = active;
+      await env.DB.prepare("UPDATE product_catalog SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+        .bind(JSON.stringify(data), id).run();
+    }
+    await audit(env, s.username, "product_status", id + ":" + active, rawIp);
+    return json({ success: true, active: !!active });
+  }
+
   if (path === "/api/admin/products" && m === "POST") {
     const s = await authorize(request, env);
     const b = await readJson(request);
@@ -949,6 +970,40 @@ async function apiRoutes(request, env, path) {
     ]);
 
     await audit(env, s.username, "inventory_add", (color || "-") + " / " + (size || "-") + " x" + qty, rawIp);
+    return json({ success: true });
+  }
+
+  if (path === "/api/admin/product-inventory/add" && m === "POST") {
+    const s = await authorize(request, env);
+    const b = await readJson(request);
+    const id = toInt(b.product_id, NaN);
+    const row = await catalogProduct(env.DB, id);
+    if (!row) throw new HttpError(404, "প্রোডাক্ট পাওয়া যায়নি!");
+    const color = String(b.color ?? "").replace(/,/g, " ").trim().slice(0, 40);
+    const size = String(b.size ?? "").replace(/,/g, " ").trim().slice(0, 40);
+    const qty = toInt(b.qty, 0);
+    if (!color && !size) throw new HttpError(400, "কালার বা সাইজ অন্তত একটি লিখুন!");
+    if (qty < 0 || qty > 100000) throw new HttpError(400, "স্টকের সংখ্যা ০ থেকে ১,০০,০০০ এর মধ্যে হতে হবে!");
+    const colors = splitList(row.colors);
+    const sizes = splitList(row.sizes);
+    if (colors.length && !color) throw new HttpError(400, "কালার লিখুন!");
+    if (sizes.length && !size) throw new HttpError(400, "সাইজ লিখুন!");
+    if (color && !colors.includes(color)) colors.push(color);
+    if (size && !sizes.includes(size)) sizes.push(size);
+    row.colors = colors.join(", ");
+    row.sizes = sizes.join(", ");
+    const cs = colors.length ? colors : [""];
+    const ss = sizes.length ? sizes : [""];
+    const stmts = [];
+    for (const c of cs) for (const z of ss) {
+      stmts.push(env.DB.prepare("INSERT OR IGNORE INTO product_inventory (product_id, color, size, qty) VALUES (?, ?, ?, 0)").bind(id, c, z));
+    }
+    stmts.push(env.DB.prepare("INSERT INTO product_inventory (product_id, color, size, qty) VALUES (?, ?, ?, ?) ON CONFLICT(product_id, color, size) DO UPDATE SET qty = excluded.qty").bind(id, color, size, qty));
+    const oldRows = await productInventory(env.DB, id);
+    row.stock = oldRows.reduce((sum, it) => sum + Number(it.qty || 0), 0) + qty;
+    stmts.push(env.DB.prepare("UPDATE product_catalog SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(JSON.stringify(row), id));
+    await env.DB.batch(stmts);
+    await audit(env, s.username, "product_inventory_add", row.title + ":" + color + "/" + size + " x" + qty, rawIp);
     return json({ success: true });
   }
 
