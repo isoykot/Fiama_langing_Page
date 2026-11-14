@@ -3921,7 +3921,7 @@ function renderAdminHTML(nonce) {
 
     function exportCSV() {
       if (!ORDERS.length) { toast(t('csv_empty'), 'err'); return; }
-      var headers = ['Order ID', 'Customer', 'Phone', 'Address', 'Items', 'Area', 'Qty', 'Subtotal', 'Bulk', 'Coupon', 'Delivery', 'Total COD', 'Status', 'Date'];
+      var headers = ['Order ID', 'Product', 'Customer', 'Phone', 'Address', 'Items', 'Area', 'Qty', 'Subtotal', 'Bulk', 'Coupon', 'Delivery', 'Total COD', 'Status', 'Date'];
       var csvEsc = function (val) {
         var s = String(val == null ? '' : val).replace(/"/g, '""').replace(/[\\r\\n]+/g, ' ');
         if (/^[=+\\-@]/.test(s)) s = "'" + s;
@@ -3929,7 +3929,7 @@ function renderAdminHTML(nonce) {
       };
       var rows = ORDERS.map(function (o) {
         return [
-          csvEsc(o.public_id), csvEsc(o.customer_name), csvEsc(o.phone), csvEsc(o.address), csvEsc(linesText(o)),
+          csvEsc(o.public_id), csvEsc(o.product_title || 'Main Product'), csvEsc(o.customer_name), csvEsc(o.phone), csvEsc(o.address), csvEsc(linesText(o)),
           csvEsc(o.delivery_area), csvEsc(o.quantity), csvEsc(o.subtotal), csvEsc(o.bulk_discount),
           csvEsc(o.coupon_discount), csvEsc(o.delivery_charge), csvEsc(o.total), csvEsc(o.status), csvEsc(o.created_at)
         ].join(',');
